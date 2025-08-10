@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "App with Tool Sidebar",
@@ -18,15 +19,13 @@ export default function RootLayout({
           <header className="header">
             <h1>My App</h1>
             <nav className="nav">
-              <a href="/">Home</a>
-              <a href="/about">About</a>
+              <Link href="/">Home</Link>
+              <Link href="/about">About</Link>
             </nav>
           </header>
 
-          {/* content row: tools + main */}
           <div className="content">
             <aside className="tools" aria-label="Tools sidebar">
-              {/* Put your app-wide tools here (filters, controls, etc.) */}
               <section className="tool-section">
                 <h2>Tools</h2>
                 <button>Action</button>
