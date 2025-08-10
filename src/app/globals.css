@@ -41,17 +41,16 @@ body {
 }
 
 /* ---- Header (sticky) ---- */
+/* Header sticky (keep your previous block) */
 .header {
   grid-area: header;
   position: sticky;
   top: 0;
   z-index: 1000;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--gap);
-
   min-height: var(--header-h);
   padding: 0.5rem 1rem;
   background: var(--header-bg);
@@ -76,28 +75,45 @@ body {
 }
 .nav a:hover { opacity: 1; }
 
-/* ---- Content row: tools + main ---- */
+/* --- Content row now has a 3-column grid: tools | handle | main --- */
 .content {
   grid-area: content;
   display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  /* First column (sidebar) width is controlled inline by ResizableColumns via gridTemplateColumns */
+  /* We define three columns: sidebar | handle (fixed) | main */
+  grid-template-columns: 320px 6px minmax(0, 1fr);
   gap: var(--gap);
   align-items: start;
-  /* space below header so sticky tools don't collide with it */
   padding: var(--gap);
 }
 
-/* ---- Tools (sticky under header) ---- */
+/* Tools still sticky under header */
 .tools {
   position: sticky;
   top: calc(var(--header-h) + var(--gap));
-  align-self: start;           /* ensure the sticky box sizes to content */
-  height: fit-content;         /* prevents stretching */
+  align-self: start;
+  height: fit-content;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 1rem;
   min-width: 0;
+}
+
+/* NEW: resize handle between tools and main */
+.resize-handle {
+  cursor: col-resize;
+  width: 6px;
+  min-width: 6px;
+  height: 100%;
+  align-self: stretch;
+  background: linear-gradient(to right, transparent 0, #1f2937 3px, transparent 6px);
+  border-radius: 999px;
+}
+.resize-handle:hover,
+.resize-handle:focus {
+  outline: none;
+  background: linear-gradient(to right, transparent 0, #334155 3px, transparent 6px);
 }
 
 .tool-section {
@@ -124,8 +140,7 @@ body {
 /* ---- Main content ---- */
 .main {
   min-width: 0;
-  /* Let the BODY be the scroll container so sticky works reliably */
-  overflow: auto;
+  overflow: auto;           /* independent scroll pane */
   border-radius: 0.75rem;
   padding: 0.5rem;
 }
@@ -143,8 +158,6 @@ body {
   .content {
     grid-template-columns: 1fr;
   }
-  .tools {
-    top: calc(var(--header-h) + var(--gap));
-    order: -1; /* show tools above main when stacked */
-  }
+  .resize-handle { display: none; }
+  .tools { order: -1; }
 }

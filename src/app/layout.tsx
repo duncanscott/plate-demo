@@ -1,10 +1,11 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
+import ResizableColumns from "@/components/ResizableColumns";
 
 export const metadata: Metadata = {
   title: "App with Tool Sidebar",
-  description: "Header + left tool area + main content layout",
+  description: "Header + resizable left tool area + main content",
 };
 
 export default function RootLayout({
@@ -24,19 +25,17 @@ export default function RootLayout({
             </nav>
           </header>
 
-          <div className="content">
-            <aside className="tools" aria-label="Tools sidebar">
+          <ResizableColumns
+            tools={
               <section className="tool-section">
                 <h2>Tools</h2>
                 <button>Action</button>
                 <button>Another</button>
               </section>
-            </aside>
-
-            <main className="main" role="main">
-              {children}
-            </main>
-          </div>
+            }
+          >
+            {children}
+          </ResizableColumns>
 
           <footer className="footer">
             <small>© {new Date().getFullYear()} My Company</small>

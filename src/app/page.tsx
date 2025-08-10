@@ -3,8 +3,7 @@ export default function Page() {
     <section style={{ display: "grid", gap: "1rem" }}>
       <h2>Dashboard</h2>
       <p>
-        Scroll this page — the header remains at the top and the tools panel
-        sticks beneath it on the left.
+        Try dragging the vertical divider — the left tools panel resizes, the header stays sticky, and only this main panel scrolls.
       </p>
       <div
         style={{
@@ -14,7 +13,7 @@ export default function Page() {
           padding: 16,
         }}
       >
-        Tall content to demonstrate sticky behavior.
+        Tall content to demonstrate scrolling.
       </div>
     </section>
   );
