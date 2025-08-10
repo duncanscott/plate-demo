@@ -1,21 +1,23 @@
-/* Layout variables */
+/* ---- Variables ---- */
 :root {
-  /* Max width for the left-hand tool area; tweak as needed */
+  /* Header height used for sticky offsets */
+  --header-h: 64px;
+
+  /* Left tools panel width cap (adjust as you like) */
   --sidebar-max: 500em;
-  /* A sensible responsive default: min 16rem, prefer 25vw, cap at --sidebar-max */
   --sidebar-width: clamp(16rem, 25vw, var(--sidebar-max));
 
   --gap: 1rem;
   --header-bg: #0f172a; /* slate-900-ish */
   --header-fg: #ffffff;
-  --surface: #0b1220;   /* page background */
-  --panel: #0e1627;     /* panels */
-  --text: #e5e7eb;      /* slate-200-ish */
-  --muted: #94a3b8;     /* slate-400-ish */
-  --border: #1f2937;    /* slate-800-ish */
+  --surface: #0b1220;
+  --panel: #0e1627;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: #1f2937;
 }
 
-/* Reset-ish bits */
+/* ---- Resets ---- */
 *,
 *::before,
 *::after { box-sizing: border-box; }
@@ -27,9 +29,9 @@ body {
   font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* Shell: header | (tools + main) | footer */
+/* ---- Page grid: header | (tools + main) | footer ---- */
 .shell {
-  min-height: 100svh; /* handle mobile safe area nicely */
+  min-height: 100svh;
   display: grid;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
@@ -38,23 +40,31 @@ body {
     "footer";
 }
 
-/* Header */
+/* ---- Header (sticky) ---- */
 .header {
   grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--gap);
-  padding: 0.75rem 1rem;
+
+  min-height: var(--header-h);
+  padding: 0.5rem 1rem;
   background: var(--header-bg);
   color: var(--header-fg);
   border-bottom: 1px solid var(--border);
 }
+
 .header h1 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
 }
+
 .nav {
   display: flex;
   gap: 0.75rem;
@@ -66,28 +76,30 @@ body {
 }
 .nav a:hover { opacity: 1; }
 
-/* Two-column content area */
+/* ---- Content row: tools + main ---- */
 .content {
   grid-area: content;
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   gap: var(--gap);
-  align-items: stretch;
+  align-items: start;
+  /* space below header so sticky tools don't collide with it */
   padding: var(--gap);
 }
 
-/* Tools (left-hand area) */
+/* ---- Tools (sticky under header) ---- */
 .tools {
+  position: sticky;
+  top: calc(var(--header-h) + var(--gap));
+  align-self: start;           /* ensure the sticky box sizes to content */
+  height: fit-content;         /* prevents stretching */
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 1rem;
-  min-width: 0; /* avoid overflow in flex/grid */
-  /* If you want the tools panel to remain visible while scrolling,
-     uncomment the next two lines and adjust the top offset as needed: */
-  /* position: sticky; */
-  /* top: 0; */
+  min-width: 0;
 }
+
 .tool-section {
   display: grid;
   gap: 0.5rem;
@@ -109,16 +121,16 @@ body {
   background: rgba(255,255,255,0.04);
 }
 
-/* Main content */
+/* ---- Main content ---- */
 .main {
-  background: transparent;
-  min-width: 0; /* let content shrink and scroll properly */
+  min-width: 0;
+  /* Let the BODY be the scroll container so sticky works reliably */
   overflow: auto;
   border-radius: 0.75rem;
   padding: 0.5rem;
 }
 
-/* Footer */
+/* ---- Footer ---- */
 .footer {
   grid-area: footer;
   border-top: 1px solid var(--border);
@@ -126,12 +138,13 @@ body {
   padding: 0.75rem 1rem;
 }
 
-/* Simple responsiveness: collapse tools below 800px if desired */
+/* ---- Stack on small screens ---- */
 @media (max-width: 800px) {
   .content {
-    grid-template-columns: 1fr; /* stack */
+    grid-template-columns: 1fr;
   }
   .tools {
+    top: calc(var(--header-h) + var(--gap));
     order: -1; /* show tools above main when stacked */
   }
 }
