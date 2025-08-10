@@ -247,14 +247,14 @@ export default function ResizableColumns({
                     title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                     aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
-                    {/* Icon: right chevron when collapsed (expand), left when expanded (collapse) */}
+                    {/* Slightly larger, thicker chevrons for better visibility */}
                     {collapsed ? (
-                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <polyline points="6,4 10,8 6,12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <polyline points="6,4 10,8 6,12" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     ) : (
-                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <polyline points="10,4 6,8 10,12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <polyline points="10,4 6,8 10,12" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     )}
                 </button>
