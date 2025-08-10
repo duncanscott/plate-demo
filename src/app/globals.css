@@ -76,15 +76,14 @@ body {
 .nav a:hover { opacity: 1; }
 
 /* --- Content row now has a 3-column grid: tools | handle | main --- */
+/* Desktop: 3 columns, sidebar width comes from CSS var */
 .content {
-  grid-area: content;
-  display: grid;
-  /* First column (sidebar) width is controlled inline by ResizableColumns via gridTemplateColumns */
-  /* We define three columns: sidebar | handle (fixed) | main */
-  grid-template-columns: 320px 6px minmax(0, 1fr);
-  gap: var(--gap);
-  align-items: start;
-  padding: var(--gap);
+    grid-area: content;
+    display: grid;
+    grid-template-columns: var(--sidebar-px, 320px) 6px minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: start;
+    padding: var(--gap);
 }
 
 /* Tools still sticky under header */
@@ -154,10 +153,11 @@ body {
 }
 
 /* ---- Stack on small screens ---- */
+/* Mobile: stack to one column (this will override the desktop rule) */
 @media (max-width: 800px) {
-  .content {
-    grid-template-columns: 1fr;
-  }
-  .resize-handle { display: none; }
-  .tools { order: -1; }
+    .content {
+        grid-template-columns: 1fr;
+    }
+    .resize-handle { display: none; }
+    .tools { order: -1; }
 }
