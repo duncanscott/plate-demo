@@ -36,10 +36,6 @@ export default function RootLayout({
           >
             {children}
           </ResizableColumns>
-
-          <footer className="footer">
-            <small>© {new Date().getFullYear()} My Company</small>
-          </footer>
         </div>
       </body>
     </html>

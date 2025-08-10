@@ -33,7 +33,7 @@ body {
 .shell {
   min-height: 100svh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "header"
     "content"
