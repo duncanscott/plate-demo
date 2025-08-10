@@ -32,10 +32,10 @@ body {
 .shell {
     min-height: 100svh;
     display: grid;
-    grid-template-rows: auto 1fr;         /* ⬅️ footer row removed */
+    grid-template-rows: auto 1fr;         /* footer row removed */
     grid-template-areas:
     "header"
-    "content";                          /* ⬅️ footer area removed */
+    "content";
 }
 
 /* ---- Header (sticky) ---- */
@@ -83,6 +83,7 @@ body {
     gap: var(--gap);
     align-items: start;
     padding: var(--gap);
+    min-height: 0; /* allow children to shrink/scroll within grid */
 }
 
 /* ---- Tools (sticky under header) ---- */
@@ -128,16 +129,22 @@ body {
     align-self: stretch;
     background: linear-gradient(to right, transparent 0, #1f2937 3px, transparent 6px);
     border-radius: 999px;
+    touch-action: none; /* prevent scroll interference during drag */
+    user-select: none;  /* avoid accidental selection flashes */
 }
+
 .resize-handle:hover,
-.resize-handle:focus {
-    outline: none;
+.resize-handle:focus,
+.resize-handle:focus-visible {
+    outline: 2px solid #64748b; /* slate-500-ish */
+    outline-offset: 2px;
     background: linear-gradient(to right, transparent 0, #334155 3px, transparent 6px);
 }
 
 /* ---- Main (independent scroll) ---- */
 .main {
     min-width: 0;
+    min-height: 0;  /* ensure the scroll area can shrink inside grid */
     overflow: auto;
     border-radius: 0.75rem;
     padding: 0.5rem;
