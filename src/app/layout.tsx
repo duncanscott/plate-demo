@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
-import ResizableColumns from "@/components/ResizableColumns";
+import ResizableColumns from "@/components/layout/ResizableColumns";
 
 export const metadata: Metadata = {
   title: "App with Tool Sidebar",

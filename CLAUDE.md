@@ -13,9 +13,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Next.js 15 application with App Router using TypeScript and Tailwind CSS. The project demonstrates a resizable column layout pattern with a sticky header and tools panel.
 
+### Component Organization
+
+Components are organized by purpose:
+- `src/components/layout/` - Layout components (ResizableColumns, etc.)
+- `src/components/ui/` - Reusable UI components (buttons, inputs, etc.)
+- `src/components/features/` - Feature-specific components
+
 ### Key Components
 
-- **ResizableColumns** (`src/components/ResizableColumns.tsx`) - Core reusable component that creates a resizable two-column layout with:
+- **ResizableColumns** (`src/components/layout/ResizableColumns.tsx`) - Core reusable component that creates a resizable two-column layout with:
   - Pointer Events API for drag handling (mouse, touch, pen support)
   - Keyboard navigation (arrow keys, Home/End, Escape)
   - Collapse/expand functionality with localStorage persistence
