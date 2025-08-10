@@ -7,11 +7,14 @@ type Props = {
     children: React.ReactNode;
     /** Server + first client render width to avoid hydration mismatch */
     defaultWidth?: number;
-    /** Min/Max width in px */
+    /** Min/Max width in px when expanded */
     min?: number;
     max?: number;
-    /** localStorage key to persist */
-    storageKey?: string;
+    /** Width in px when collapsed (0 = fully hidden) */
+    collapsedWidth?: number;
+    /** localStorage keys to persist */
+    storageKey?: string;          // for width
+    collapsedStorageKey?: string; // for collapsed state
 };
 
 export default function ResizableColumns({
@@ -20,23 +23,33 @@ export default function ResizableColumns({
                                              defaultWidth = 320,
                                              min = 220,
                                              max = 800,
+                                             collapsedWidth = 0,
                                              storageKey = "sidebarWidth",
+                                             collapsedStorageKey = "sidebarCollapsed",
                                          }: Props) {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const handleRef = React.useRef<HTMLDivElement | null>(null);
     const draggingRef = React.useRef(false);
     const pointerIdRef = React.useRef<number | null>(null);
+    const lastExpandedRef = React.useRef<number>(defaultWidth);
 
     // Render same width on server and initial client paint
     const [width, setWidth] = React.useState<number>(defaultWidth);
+    const [collapsed, setCollapsed] = React.useState(false);
 
     // After mount, hydrate from localStorage (if available)
     React.useEffect(() => {
         try {
-            const saved = window.localStorage.getItem(storageKey);
-            if (saved) {
-                const n = Number(saved);
-                if (!Number.isNaN(n)) setWidth(clamp(n, min, max));
+            const savedCollapsed = window.localStorage.getItem(collapsedStorageKey);
+            if (savedCollapsed === "true") setCollapsed(true);
+            const savedWidth = window.localStorage.getItem(storageKey);
+            if (savedWidth) {
+                const n = Number(savedWidth);
+                if (!Number.isNaN(n)) {
+                    const clamped = clamp(n, min, max);
+                    setWidth(clamped);
+                    lastExpandedRef.current = clamped;
+                }
             }
         } catch {
             /* ignore */
@@ -44,14 +57,18 @@ export default function ResizableColumns({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Persist width on change (post-mount)
+    // Persist width and collapsed on change (post-mount)
     React.useEffect(() => {
         try {
             window.localStorage.setItem(storageKey, String(width));
-        } catch {
-            /* ignore */
-        }
+        } catch {/* ignore */}
     }, [width, storageKey]);
+
+    React.useEffect(() => {
+        try {
+            window.localStorage.setItem(collapsedStorageKey, String(collapsed));
+        } catch {/* ignore */}
+    }, [collapsed, collapsedStorageKey]);
 
     // Helper for position -> width
     const updateFromClientX = React.useCallback(
@@ -60,28 +77,34 @@ export default function ResizableColumns({
             if (!el) return;
             const rect = el.getBoundingClientRect();
             const x = clientX - rect.left;
-            setWidth((_) => clamp(x, min, max));
+            const next = clamp(x, min, max);
+            setWidth(next);
+            lastExpandedRef.current = next; // remember last expanded width
         },
         [min, max]
     );
 
     // Start drag via Pointer Events
     const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        // Only left button or touch/pen; ignore right click etc.
+        // Only left button for mouse; touch/pen are fine
         if (e.button !== 0 && e.pointerType === "mouse") return;
 
         draggingRef.current = true;
         pointerIdRef.current = e.pointerId;
 
-        // Capture pointer so we continue receiving events even if the pointer leaves the handle
         try {
             handleRef.current?.setPointerCapture(e.pointerId);
-        } catch {
-            // Some browsers may throw if capture is not supported—safe to ignore
-        }
+        } catch {/* ignore */}
 
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
+
+        // If collapsed, expand first (so drag works immediately)
+        if (collapsed) {
+            setCollapsed(false);
+            // restore the last expanded width immediately before moving
+            setWidth(lastExpandedRef.current);
+        }
 
         updateFromClientX(e.clientX);
     };
@@ -90,23 +113,19 @@ export default function ResizableColumns({
     React.useEffect(() => {
         function handlePointerMove(e: PointerEvent) {
             if (!draggingRef.current) return;
-            // Prevent page scrolling on touch while dragging (touch-action: none on the handle helps too)
             e.preventDefault?.();
             updateFromClientX(e.clientX);
         }
 
-        function stopDrag(e?: PointerEvent) {
+        function stopDrag() {
             if (!draggingRef.current) return;
             draggingRef.current = false;
 
-            // Release capture if we own it
             const id = pointerIdRef.current;
             if (id != null) {
                 try {
                     handleRef.current?.releasePointerCapture(id);
-                } catch {
-                    /* ignore */
-                }
+                } catch {/* ignore */}
             }
             pointerIdRef.current = null;
 
@@ -130,16 +149,26 @@ export default function ResizableColumns({
         const step = e.shiftKey ? 20 : 10;
         if (e.key === "ArrowLeft") {
             e.preventDefault();
-            setWidth((w) => clamp(w - step, min, max));
+            const next = clamp((collapsed ? lastExpandedRef.current : width) - step, min, max);
+            setCollapsed(false);
+            setWidth(next);
+            lastExpandedRef.current = next;
         } else if (e.key === "ArrowRight") {
             e.preventDefault();
-            setWidth((w) => clamp(w + step, min, max));
+            const next = clamp((collapsed ? lastExpandedRef.current : width) + step, min, max);
+            setCollapsed(false);
+            setWidth(next);
+            lastExpandedRef.current = next;
         } else if (e.key === "Home") {
             e.preventDefault();
+            setCollapsed(false);
             setWidth(min);
+            lastExpandedRef.current = min;
         } else if (e.key === "End") {
             e.preventDefault();
+            setCollapsed(false);
             setWidth(max);
+            lastExpandedRef.current = max;
         } else if (e.key === "Escape") {
             e.preventDefault();
             // End any active drag
@@ -158,18 +187,44 @@ export default function ResizableColumns({
         }
     }
 
+    // Toggle collapse/expand
+    const toggleCollapsed = (e?: React.SyntheticEvent) => {
+        e?.stopPropagation?.();
+        setCollapsed((c) => {
+            if (c) {
+                // expanding: restore last known expanded width
+                setWidth(lastExpandedRef.current);
+                return false;
+            } else {
+                // collapsing: remember current width for future restore
+                lastExpandedRef.current = clamp(width, min, max);
+                setWidth(collapsedWidth);
+                return true;
+            }
+        });
+    };
+
+    // Effective width sent to CSS var
+    const effectivePx = collapsed ? collapsedWidth : width;
+
     return (
         <div
             ref={containerRef}
             className="content"
+            data-collapsed={collapsed ? "true" : "false"}
             // CSS owns the grid; we only provide the current width value
-            style={{ ["--sidebar-px" as any]: `${width}px` }}
+            style={{ ["--sidebar-px" as any]: `${effectivePx}px` }}
         >
-            <aside className="tools" aria-label="Tools sidebar">
+            <aside
+                className={`tools${collapsed ? " is-collapsed" : ""}`}
+                aria-label="Tools sidebar"
+                aria-hidden={collapsed}
+                id="tools-panel"
+            >
                 {tools}
             </aside>
 
-            {/* Drag handle between columns */}
+            {/* Drag handle between columns, with the ONLY collapse toggle */}
             <div
                 ref={handleRef}
                 className="resize-handle"
@@ -178,11 +233,34 @@ export default function ResizableColumns({
                 aria-label="Resize sidebar"
                 aria-valuemin={min}
                 aria-valuemax={max}
-                aria-valuenow={Math.round(width)}
+                aria-valuenow={Math.round(effectivePx)}
                 tabIndex={0}
                 onPointerDown={onPointerDown}
                 onKeyDown={onKeyDown}
-            />
+            >
+                <button
+                    type="button"
+                    className="collapse-btn handle-btn"
+                    onClick={toggleCollapsed}
+                    onPointerDown={(e) => e.stopPropagation()} /* prevent drag start */
+                    aria-pressed={collapsed}
+                    aria-expanded={!collapsed}
+                    aria-controls="tools-panel"
+                    title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {/* Icon: right chevron when collapsed (expand), left when expanded (collapse) */}
+                    {collapsed ? (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <polyline points="6,4 10,8 6,12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    ) : (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <polyline points="10,4 6,8 10,12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    )}
+                </button>
+            </div>
 
             <main className="main" role="main">
                 {children}

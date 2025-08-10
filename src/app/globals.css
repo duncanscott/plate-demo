@@ -32,7 +32,7 @@ body {
 .shell {
     min-height: 100svh;
     display: grid;
-    grid-template-rows: auto 1fr;         /* footer row removed */
+    grid-template-rows: auto 1fr;
     grid-template-areas:
     "header"
     "content";
@@ -79,7 +79,7 @@ body {
     grid-area: content;
     display: grid;
     /* First column width comes from CSS var set by ResizableColumns */
-    grid-template-columns: var(--sidebar-px, 320px) 6px minmax(0, 1fr);
+    grid-template-columns: var(--sidebar-px, 320px) 24px minmax(0, 1fr);
     gap: var(--gap);
     align-items: start;
     padding: var(--gap);
@@ -97,40 +97,52 @@ body {
     border-radius: 0.75rem;
     padding: 1rem;
     min-width: 0;
+    transition: padding 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
 
-.tool-section {
+/* when collapsed, visually hide content spacing */
+.tools.is-collapsed {
+    padding: 0;
+    border-width: 0;
+    opacity: 0;
+}
+
+/* ---- Generic small button used in the handle ---- */
+.collapse-btn {
     display: grid;
-    gap: 0.5rem;
-}
-.tool-section h2 {
-    margin: 0 0 0.5rem;
-    font-size: 0.9rem;
-    color: var(--muted);
-}
-.tool-section button {
-    padding: 0.5rem 0.75rem;
-    background: transparent;
-    color: var(--text);
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.06);
     border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    color: var(--text);
+    font-weight: 600;
+    line-height: 1;
+    padding: 0;
     cursor: pointer;
 }
-.tool-section button:hover {
-    background: rgba(255,255,255,0.04);
+.collapse-btn:hover {
+    background: rgba(255,255,255,0.12);
+}
+.collapse-btn:focus-visible {
+    outline: 2px solid #64748b;
+    outline-offset: 2px;
 }
 
 /* ---- Resize handle ---- */
 .resize-handle {
+    position: relative; /* for the handle button positioning */
     cursor: col-resize;
-    width: 6px;
-    min-width: 6px;
+    width: 24px;        /* wider for accessibility */
+    min-width: 24px;
     height: 100%;
     align-self: stretch;
-    background: linear-gradient(to right, transparent 0, #1f2937 3px, transparent 6px);
+    /* subtle center stripe */
+    background: linear-gradient(to right, transparent 0, #1f2937 12px, transparent 24px);
     border-radius: 999px;
     touch-action: none; /* prevent scroll interference during drag */
-    user-select: none;  /* avoid accidental selection flashes */
+    user-select: none;  /* avoid accidental selection */
 }
 
 .resize-handle:hover,
@@ -138,13 +150,21 @@ body {
 .resize-handle:focus-visible {
     outline: 2px solid #64748b; /* slate-500-ish */
     outline-offset: 2px;
-    background: linear-gradient(to right, transparent 0, #334155 3px, transparent 6px);
+    background: linear-gradient(to right, transparent 0, #334155 12px, transparent 24px);
+}
+
+/* Position the handle's toggle button near the top for discoverability */
+.resize-handle .handle-btn {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 /* ---- Main (independent scroll) ---- */
 .main {
     min-width: 0;
-    min-height: 0;  /* ensure the scroll area can shrink inside grid */
+    min-height: 0;
     overflow: auto;
     border-radius: 0.75rem;
     padding: 0.5rem;
