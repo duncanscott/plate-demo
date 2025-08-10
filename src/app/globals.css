@@ -1,26 +1,137 @@
-@import "tailwindcss";
-
+/* Layout variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Max width for the left-hand tool area; tweak as needed */
+  --sidebar-max: 500em;
+  /* A sensible responsive default: min 16rem, prefer 25vw, cap at --sidebar-max */
+  --sidebar-width: clamp(16rem, 25vw, var(--sidebar-max));
+
+  --gap: 1rem;
+  --header-bg: #0f172a; /* slate-900-ish */
+  --header-fg: #ffffff;
+  --surface: #0b1220;   /* page background */
+  --panel: #0e1627;     /* panels */
+  --text: #e5e7eb;      /* slate-200-ish */
+  --muted: #94a3b8;     /* slate-400-ish */
+  --border: #1f2937;    /* slate-800-ish */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Reset-ish bits */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Shell: header | (tools + main) | footer */
+.shell {
+  min-height: 100svh; /* handle mobile safe area nicely */
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header"
+    "content"
+    "footer";
+}
+
+/* Header */
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 0.75rem 1rem;
+  background: var(--header-bg);
+  color: var(--header-fg);
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.nav {
+  display: flex;
+  gap: 0.75rem;
+}
+.nav a {
+  color: var(--header-fg);
+  text-decoration: none;
+  opacity: 0.9;
+}
+.nav a:hover { opacity: 1; }
+
+/* Two-column content area */
+.content {
+  grid-area: content;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: stretch;
+  padding: var(--gap);
+}
+
+/* Tools (left-hand area) */
+.tools {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  min-width: 0; /* avoid overflow in flex/grid */
+  /* If you want the tools panel to remain visible while scrolling,
+     uncomment the next two lines and adjust the top offset as needed: */
+  /* position: sticky; */
+  /* top: 0; */
+}
+.tool-section {
+  display: grid;
+  gap: 0.5rem;
+}
+.tool-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.tool-section button {
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.tool-section button:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* Main content */
+.main {
+  background: transparent;
+  min-width: 0; /* let content shrink and scroll properly */
+  overflow: auto;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+}
+
+/* Footer */
+.footer {
+  grid-area: footer;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+}
+
+/* Simple responsiveness: collapse tools below 800px if desired */
+@media (max-width: 800px) {
+  .content {
+    grid-template-columns: 1fr; /* stack */
+  }
+  .tools {
+    order: -1; /* show tools above main when stacked */
+  }
 }
