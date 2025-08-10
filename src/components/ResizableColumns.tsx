@@ -23,7 +23,9 @@ export default function ResizableColumns({
                                              storageKey = "sidebarWidth",
                                          }: Props) {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
+    const handleRef = React.useRef<HTMLDivElement | null>(null);
     const draggingRef = React.useRef(false);
+    const pointerIdRef = React.useRef<number | null>(null);
 
     // Render same width on server and initial client paint
     const [width, setWidth] = React.useState<number>(defaultWidth);
@@ -51,53 +53,79 @@ export default function ResizableColumns({
         }
     }, [width, storageKey]);
 
-    function startDrag() {
-        draggingRef.current = true;
-        document.body.style.cursor = "col-resize";
-        document.body.style.userSelect = "none";
-    }
-
-    function stopDrag() {
-        draggingRef.current = false;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-    }
-
-    React.useEffect(() => {
-        function onMove(clientX: number) {
+    // Helper for position -> width
+    const updateFromClientX = React.useCallback(
+        (clientX: number) => {
             const el = containerRef.current;
             if (!el) return;
             const rect = el.getBoundingClientRect();
             const x = clientX - rect.left;
             setWidth((_) => clamp(x, min, max));
+        },
+        [min, max]
+    );
+
+    // Start drag via Pointer Events
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        // Only left button or touch/pen; ignore right click etc.
+        if (e.button !== 0 && e.pointerType === "mouse") return;
+
+        draggingRef.current = true;
+        pointerIdRef.current = e.pointerId;
+
+        // Capture pointer so we continue receiving events even if the pointer leaves the handle
+        try {
+            handleRef.current?.setPointerCapture(e.pointerId);
+        } catch {
+            // Some browsers may throw if capture is not supported—safe to ignore
         }
 
-        function handleMouseMove(e: MouseEvent) {
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+
+        updateFromClientX(e.clientX);
+    };
+
+    // Global listeners for pointer move/up/cancel
+    React.useEffect(() => {
+        function handlePointerMove(e: PointerEvent) {
             if (!draggingRef.current) return;
-            e.preventDefault();
-            onMove(e.clientX);
+            // Prevent page scrolling on touch while dragging (touch-action: none on the handle helps too)
+            e.preventDefault?.();
+            updateFromClientX(e.clientX);
         }
 
-        function handleTouchMove(e: TouchEvent) {
+        function stopDrag(e?: PointerEvent) {
             if (!draggingRef.current) return;
-            if (e.touches[0]) onMove(e.touches[0].clientX);
+            draggingRef.current = false;
+
+            // Release capture if we own it
+            const id = pointerIdRef.current;
+            if (id != null) {
+                try {
+                    handleRef.current?.releasePointerCapture(id);
+                } catch {
+                    /* ignore */
+                }
+            }
+            pointerIdRef.current = null;
+
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
         }
 
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("mouseup", stopDrag);
-        window.addEventListener("touchmove", handleTouchMove, { passive: false });
-        window.addEventListener("touchend", stopDrag);
-        window.addEventListener("touchcancel", stopDrag); // ensure cleanup on cancel
+        window.addEventListener("pointermove", handlePointerMove, { passive: false });
+        window.addEventListener("pointerup", stopDrag);
+        window.addEventListener("pointercancel", stopDrag);
 
         return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", stopDrag);
-            window.removeEventListener("touchmove", handleTouchMove);
-            window.removeEventListener("touchend", stopDrag);
-            window.removeEventListener("touchcancel", stopDrag);
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", stopDrag);
+            window.removeEventListener("pointercancel", stopDrag);
         };
-    }, [min, max]);
+    }, [updateFromClientX]);
 
+    // Keyboard resizing + ESC to cancel
     function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
         const step = e.shiftKey ? 20 : 10;
         if (e.key === "ArrowLeft") {
@@ -114,7 +142,19 @@ export default function ResizableColumns({
             setWidth(max);
         } else if (e.key === "Escape") {
             e.preventDefault();
-            stopDrag(); // cancel any drag state
+            // End any active drag
+            if (draggingRef.current) {
+                draggingRef.current = false;
+                const id = pointerIdRef.current;
+                if (id != null) {
+                    try {
+                        handleRef.current?.releasePointerCapture(id);
+                    } catch {/* ignore */}
+                }
+                pointerIdRef.current = null;
+                document.body.style.cursor = "";
+                document.body.style.userSelect = "";
+            }
         }
     }
 
@@ -131,6 +171,7 @@ export default function ResizableColumns({
 
             {/* Drag handle between columns */}
             <div
+                ref={handleRef}
                 className="resize-handle"
                 role="separator"
                 aria-orientation="vertical"
@@ -139,8 +180,7 @@ export default function ResizableColumns({
                 aria-valuemax={max}
                 aria-valuenow={Math.round(width)}
                 tabIndex={0}
-                onMouseDown={startDrag}
-                onTouchStart={startDrag}
+                onPointerDown={onPointerDown}
                 onKeyDown={onKeyDown}
             />
 
