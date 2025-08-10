@@ -1,20 +1,19 @@
 /* ---- Variables ---- */
 :root {
-  /* Header height used for sticky offsets */
-  --header-h: 64px;
+    --header-h: 64px;
 
-  /* Left tools panel width cap (adjust as you like) */
-  --sidebar-max: 500em;
-  --sidebar-width: clamp(16rem, 25vw, var(--sidebar-max));
+    /* Left tools panel width cap */
+    --sidebar-max: 500em;
+    --sidebar-width: clamp(16rem, 25vw, var(--sidebar-max));
 
-  --gap: 1rem;
-  --header-bg: #0f172a; /* slate-900-ish */
-  --header-fg: #ffffff;
-  --surface: #0b1220;
-  --panel: #0e1627;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --border: #1f2937;
+    --gap: 1rem;
+    --header-bg: #0f172a;
+    --header-fg: #ffffff;
+    --surface: #0b1220;
+    --panel: #0e1627;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --border: #1f2937;
 }
 
 /* ---- Resets ---- */
@@ -23,137 +22,128 @@
 *::after { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
-  margin: 0;
-  background: var(--surface);
-  color: var(--text);
-  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    margin: 0;
+    background: var(--surface);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-/* ---- Page grid: header | (tools + main) | footer ---- */
+/* ---- Page grid: header | (tools + main) ---- */
 .shell {
-  min-height: 100svh;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr;         /* ⬅️ footer row removed */
+    grid-template-areas:
     "header"
-    "content"
-    "footer";
+    "content";                          /* ⬅️ footer area removed */
 }
 
 /* ---- Header (sticky) ---- */
-/* Header sticky (keep your previous block) */
 .header {
-  grid-area: header;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gap);
-  min-height: var(--header-h);
-  padding: 0.5rem 1rem;
-  background: var(--header-bg);
-  color: var(--header-fg);
-  border-bottom: 1px solid var(--border);
+    grid-area: header;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap);
+
+    min-height: var(--header-h);
+    padding: 0.5rem 1rem;
+    background: var(--header-bg);
+    color: var(--header-fg);
+    border-bottom: 1px solid var(--border);
 }
 
 .header h1 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
 }
 
 .nav {
-  display: flex;
-  gap: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
 }
 .nav a {
-  color: var(--header-fg);
-  text-decoration: none;
-  opacity: 0.9;
+    color: var(--header-fg);
+    text-decoration: none;
+    opacity: 0.9;
 }
 .nav a:hover { opacity: 1; }
 
-/* --- Content row now has a 3-column grid: tools | handle | main --- */
-/* Desktop: 3 columns, sidebar width comes from CSS var */
+/* --- Content row: tools | handle | main --- */
 .content {
     grid-area: content;
     display: grid;
+    /* First column width comes from CSS var set by ResizableColumns */
     grid-template-columns: var(--sidebar-px, 320px) 6px minmax(0, 1fr);
     gap: var(--gap);
     align-items: start;
     padding: var(--gap);
 }
 
-/* Tools still sticky under header */
+/* ---- Tools (sticky under header) ---- */
 .tools {
-  position: sticky;
-  top: calc(var(--header-h) + var(--gap));
-  align-self: start;
-  height: fit-content;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  min-width: 0;
-}
-
-/* NEW: resize handle between tools and main */
-.resize-handle {
-  cursor: col-resize;
-  width: 6px;
-  min-width: 6px;
-  height: 100%;
-  align-self: stretch;
-  background: linear-gradient(to right, transparent 0, #1f2937 3px, transparent 6px);
-  border-radius: 999px;
-}
-.resize-handle:hover,
-.resize-handle:focus {
-  outline: none;
-  background: linear-gradient(to right, transparent 0, #334155 3px, transparent 6px);
+    position: sticky;
+    top: calc(var(--header-h) + var(--gap));
+    align-self: start;
+    height: fit-content;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-width: 0;
 }
 
 .tool-section {
-  display: grid;
-  gap: 0.5rem;
+    display: grid;
+    gap: 0.5rem;
 }
 .tool-section h2 {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  color: var(--muted);
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
 }
 .tool-section button {
-  padding: 0.5rem 0.75rem;
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    cursor: pointer;
 }
 .tool-section button:hover {
-  background: rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.04);
 }
 
-/* ---- Main content ---- */
+/* ---- Resize handle ---- */
+.resize-handle {
+    cursor: col-resize;
+    width: 6px;
+    min-width: 6px;
+    height: 100%;
+    align-self: stretch;
+    background: linear-gradient(to right, transparent 0, #1f2937 3px, transparent 6px);
+    border-radius: 999px;
+}
+.resize-handle:hover,
+.resize-handle:focus {
+    outline: none;
+    background: linear-gradient(to right, transparent 0, #334155 3px, transparent 6px);
+}
+
+/* ---- Main (independent scroll) ---- */
 .main {
-  min-width: 0;
-  overflow: auto;           /* independent scroll pane */
-  border-radius: 0.75rem;
-  padding: 0.5rem;
+    min-width: 0;
+    overflow: auto;
+    border-radius: 0.75rem;
+    padding: 0.5rem;
 }
 
-/* ---- Footer ---- */
-.footer {
-  grid-area: footer;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  padding: 0.75rem 1rem;
-}
-
-/* ---- Stack on small screens ---- */
-/* Mobile: stack to one column (this will override the desktop rule) */
+/* ---- Mobile: stack; hide handle ---- */
 @media (max-width: 800px) {
     .content {
         grid-template-columns: 1fr;
