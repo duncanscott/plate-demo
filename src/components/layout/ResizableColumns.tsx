@@ -211,7 +211,7 @@ export default function ResizableColumns({
             className="content"
             data-collapsed={collapsed ? "true" : "false"}
             // CSS owns the grid; we only provide the current width value
-            style={{ ["--sidebar-px" as any]: `${effectivePx}px` }}
+            style={{ "--sidebar-px": `${effectivePx}px` } as React.CSSProperties}
         >
             <aside
                 className={`tools${collapsed ? " is-collapsed" : ""}`}
