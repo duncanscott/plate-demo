@@ -2,6 +2,7 @@
   "name": "plate-demo",
   "version": "0.1.0",
   "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -11,7 +12,8 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.4.6"
+    "next": "15.4.6",
+    "react-well-plates": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5",
