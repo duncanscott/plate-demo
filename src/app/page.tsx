@@ -3,7 +3,7 @@
 import { useTools } from "@/components/layout/ToolsContext";
 
 export default function Page() {
-  useTools(
+  const dashboardTools = (
     <section className="tool-section">
       <h2>Dashboard Tools</h2>
       <button>New Project</button>
@@ -21,6 +21,8 @@ export default function Page() {
       </div>
     </section>
   );
+
+  useTools(dashboardTools);
 
   return (
     <section style={{ display: "grid", gap: "1rem" }}>
