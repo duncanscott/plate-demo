@@ -36,7 +36,12 @@ export function useToolsContext() {
   return context;
 }
 
-export function useTools(toolsContent: ReactNode) {
+/**
+ * Set the Tools sidebar content from a page/component.
+ * Pass a dependency list to control when the tools are refreshed to avoid infinite re-renders.
+ * Example: useTools(<MyTools count={count} />, [count])
+ */
+export function useTools(toolsContent: ReactNode, deps: React.DependencyList = []) {
   const { setTools } = useToolsContext();
   
   useEffect(() => {
@@ -45,5 +50,7 @@ export function useTools(toolsContent: ReactNode) {
       // Restore a sensible default when the page unmounts
       setTools(defaultTools);
     };
-  }, [toolsContent, setTools]);
+    // Intentionally depend on caller-provided deps only to avoid loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 }

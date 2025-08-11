@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MultiWellPicker, PositionFormat } from 'react-well-plates';
 import { useTools } from "@/components/layout/ToolsContext";
 
@@ -18,7 +18,7 @@ export default function PlatePage() {
     setSelectedLabels([]);
   };
 
-  useTools(
+  const tools = useMemo(() => (
     <section className="tool-section">
       <h2>Plate Tools</h2>
       <button onClick={clearSelection} disabled={selectedWells.length === 0}>
@@ -65,7 +65,9 @@ export default function PlatePage() {
         </>
       )}
     </section>
-  );
+  ), [selectedWells, selectedLabels]);
+
+  useTools(tools, [selectedWells, selectedLabels]);
 
   return (
     <section style={{ display: "grid", gap: "2rem", padding: "1rem" }}>

@@ -29,6 +29,7 @@ export default function ResizableColumns({
                                          }: Props) {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const handleRef = React.useRef<HTMLDivElement | null>(null);
+    const asideRef = React.useRef<HTMLElement | null>(null);
     const draggingRef = React.useRef(false);
     const pointerIdRef = React.useRef<number | null>(null);
     const lastExpandedRef = React.useRef<number>(defaultWidth);
@@ -56,6 +57,17 @@ export default function ResizableColumns({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Keep DOM inert attribute in sync when collapsed
+    React.useEffect(() => {
+        const el = asideRef.current;
+        if (!el) return;
+        if (collapsed) {
+            el.setAttribute('inert', '');
+        } else {
+            el.removeAttribute('inert');
+        }
+    }, [collapsed]);
 
     // Persist width and collapsed on change (post-mount)
     React.useEffect(() => {
@@ -222,11 +234,11 @@ export default function ResizableColumns({
             style={{ "--sidebar-px": `${effectivePx}px` } as React.CSSProperties}
         >
             <aside
+                ref={asideRef}
                 className={`tools${collapsed ? " is-collapsed" : ""}`}
                 aria-label="Tools sidebar"
                 aria-hidden={collapsed}
                 id="tools-panel"
-                {...(collapsed ? { inert: '' as unknown as boolean } : {})}
             >
                 {tools}
             </aside>

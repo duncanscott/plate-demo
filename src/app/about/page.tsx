@@ -1,9 +1,10 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTools } from "@/components/layout/ToolsContext";
 
 export default function AboutPage() {
-  useTools(
+  const tools = useMemo(() => (
     <section className="tool-section">
       <h2>About Tools</h2>
       <div>
@@ -19,7 +20,9 @@ export default function AboutPage() {
         </button>
       </div>
     </section>
-  );
+  ), []);
+
+  useTools(tools, []);
 
   return (
     <section style={{ display: "grid", gap: "1rem" }}>
