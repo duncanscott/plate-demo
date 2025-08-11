@@ -1,1 +1,3 @@
-export { WellPlate } from "./well-plate";
+export * from './WellPicker';
+export * from './WellPlate';
+export { PositionFormat } from 'well-plates';

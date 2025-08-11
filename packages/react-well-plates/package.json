@@ -1,13 +1,66 @@
 {
   "name": "react-well-plates",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Local editable copy of the well plates React components",
+  "version": "7.0.3",
+  "description": "Render well plates in react",
+  "main": "lib/src/index.js",
+  "module": "lib-es/src/index.js",
+  "types": "lib-es/src/index.d.ts",
+  "files": [
+    "lib/src",
+    "lib-es/src",
+    "src"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:ts",
+    "build:ts": "tsc && tsc -p tsconfig.es.json",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf lib lib-es",
+    "prepack": "npm run build",
+    "dev": "storybook dev",
+    "build-storybook": "storybook build",
+    "eslint": "eslint .",
+    "eslint-fix": "npm run eslint -- --fix",
+    "prettier": "prettier --check .",
+    "prettier-write": "prettier --write .",
+    "test": "npm run eslint && npm run check-types && npm run prettier",
+    "storybook": "storybook dev -p 6006"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zakodium-oss/react-well-plates.git"
+  },
+  "keywords": [],
+  "author": "Daniel Kostro",
   "license": "MIT",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "bugs": {
+    "url": "https://github.com/zakodium-oss/react-well-plates/issues"
+  },
+  "homepage": "https://github.com/zakodium-oss/react-well-plates#readme",
   "peerDependencies": {
-    "react": "^18.2.0 || ^19.0.0",
-    "react-dom": "^18.2.0 || ^19.0.0"
+    "react": ">=16.0.0",
+    "react-dom": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "^8.2.8",
+    "@storybook/addon-links": "^8.2.8",
+    "@storybook/addon-storysource": "^8.2.8",
+    "@storybook/blocks": "^8.2.8",
+    "@storybook/react": "^8.2.8",
+    "@storybook/react-vite": "^8.2.8",
+    "@storybook/test": "^8.2.8",
+    "@types/react": "^17.0.50",
+    "eslint": "^8.47.0",
+    "eslint-config-zakodium": "^12.0.0",
+    "prettier": "^3.3.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "storybook": "^8.2.8",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "well-plates": "workspace:*"
+  },
+  "volta": {
+    "node": "20.16.0"
   }
 }
