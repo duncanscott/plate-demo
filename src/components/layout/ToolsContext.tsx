@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 
 interface ToolsContextValue {
   tools: ReactNode;
@@ -10,7 +10,7 @@ interface ToolsContextValue {
 const ToolsContext = createContext<ToolsContextValue | undefined>(undefined);
 
 export function ToolsProvider({ children }: { children: ReactNode }) {
-  const [tools, setTools] = useState<ReactNode>(
+  const [tools, setToolsState] = useState<ReactNode>(
     <section className="tool-section">
       <h2>Tools</h2>
       <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
@@ -18,6 +18,10 @@ export function ToolsProvider({ children }: { children: ReactNode }) {
       </p>
     </section>
   );
+
+  const setTools = useCallback((newTools: ReactNode) => {
+    setToolsState(newTools);
+  }, []);
 
   return (
     <ToolsContext.Provider value={{ tools, setTools }}>
@@ -40,16 +44,6 @@ export function useTools(toolsContent: ReactNode) {
   useEffect(() => {
     setTools(toolsContent);
     
-    // Cleanup: reset to default when component unmounts
-    return () => {
-      setTools(
-        <section className="tool-section">
-          <h2>Tools</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-            No tools defined for this page
-          </p>
-        </section>
-      );
-    };
+    // No cleanup needed - let the next page set its own tools
   }, [toolsContent, setTools]);
 }
