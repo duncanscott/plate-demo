@@ -41,5 +41,9 @@ export function useTools(toolsContent: ReactNode) {
   
   useEffect(() => {
     setTools(toolsContent);
-  }, []); // Empty dependency array - only run once on mount
+    return () => {
+      // Restore a sensible default when the page unmounts
+      setTools(defaultTools);
+    };
+  }, [toolsContent, setTools]);
 }

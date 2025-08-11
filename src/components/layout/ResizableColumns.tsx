@@ -142,6 +142,14 @@ export default function ResizableColumns({
         };
     }, [updateFromClientX]);
 
+    // On unmount, ensure body styles are restored
+    React.useEffect(() => {
+        return () => {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, []);
+
     // Keyboard resizing + ESC to cancel
     function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
         const step = e.shiftKey ? 20 : 10;
@@ -218,6 +226,7 @@ export default function ResizableColumns({
                 aria-label="Tools sidebar"
                 aria-hidden={collapsed}
                 id="tools-panel"
+                {...(collapsed ? { inert: '' as unknown as boolean } : {})}
             >
                 {tools}
             </aside>
