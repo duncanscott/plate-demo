@@ -2,9 +2,9 @@
   "name": "react-well-plates",
   "version": "7.0.3",
   "description": "Render well plates in react",
-  "main": "lib/src/index.js",
-  "module": "lib-es/src/index.js",
-  "types": "lib-es/src/index.d.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
   "files": [
     "lib/src",
     "lib-es/src",
@@ -58,7 +58,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "well-plates": "workspace:*"
+    "well-plates": "file:../well-plates"
   },
   "volta": {
     "node": "20.16.0"
