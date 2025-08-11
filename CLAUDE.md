@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Architecture
 
-This is a Next.js 15 application with App Router using TypeScript and Tailwind CSS. The project demonstrates a resizable column layout pattern with a sticky header and tools panel.
+This is a Next.js 15 application with App Router using TypeScript and Tailwind CSS. The project features dual Excel-like data grids with advanced functionality, a resizable layout system, and page-specific tools panels.
 
 ### Component Organization
 
@@ -28,6 +28,18 @@ Components are organized by purpose:
   - Collapse/expand functionality with localStorage persistence
   - Accessibility features (ARIA labels, focus management)
   - CSS custom properties for dynamic width control
+
+- **ToolsContext** (`src/components/layout/ToolsContext.tsx`) - Context system for page-specific tools panels:
+  - `useTools(content, deps)` hook for setting tools content
+  - Dependency-aware updates to prevent infinite re-renders
+  - Default fallback tools for pages without custom tools
+
+- **Grid Page** (`src/app/grid/page.tsx`) - Dual data grid implementation with:
+  - Main data grid with native Excel/CSV paste support (Ctrl+V/⌘V)
+  - Token processing grid with 5-column layout
+  - Column sorting (click headers for asc/desc)
+  - Column resizing (drag borders)
+  - Token lookup and processing workflow
 
 ### Layout Structure
 
@@ -57,3 +69,33 @@ Components are organized by purpose:
 - Grid-based layout with CSS Grid
 - Dark theme color scheme
 - Mobile-first responsive design
+
+## Key Dependencies
+
+- **@glideapps/glide-data-grid** - High-performance data grid with Excel-like functionality
+- **react-well-plates** - MIT-licensed well plate visualization components
+- **marked** - Markdown parsing for content rendering
+- **react-responsive-carousel** - Carousel component for UI elements
+
+## Grid Functionality
+
+The `/grid` page demonstrates advanced data grid capabilities:
+
+### Main Data Grid
+- Native paste support from Excel, Google Sheets, CSV
+- Dynamic column generation based on pasted data
+- Intelligent data type detection (numbers, strings, booleans)
+- Column sorting with visual feedback
+- Column resizing with persistent widths
+
+### Token Processing Grid  
+- Fixed 5-column structure (Token, Result, Status, Notes, Extra)
+- Token input via tools panel text area
+- Process tokens into leftmost column with mock results
+- Independent sorting and resizing from main grid
+
+### Usage Patterns
+- Paste data: Copy from Excel → Ctrl+V/⌘V directly into grid
+- Sort columns: Click column headers to toggle asc/desc
+- Resize columns: Drag column borders to adjust widths
+- Process tokens: Enter tokens in tools panel → click "Process Tokens"

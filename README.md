@@ -1,24 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plate Demo - Data Grid Application
+
+A Next.js application featuring dual Excel-like data grids with advanced functionality including sortable columns, resizable layouts, and native paste support.
+
+## Features
+
+### 📊 Dual Data Grids
+- **Main Data Grid**: Excel-like grid with native paste support (Ctrl+V/⌘V)
+- **Token Processing Grid**: 5-column grid for token analysis and processing
+- Support for Excel, Google Sheets, and CSV data import
+
+### 🎛️ Interactive Features  
+- **Column Sorting**: Click headers to sort ascending/descending
+- **Column Resizing**: Drag column borders to adjust widths
+- **Native Paste**: Direct paste from Excel/Sheets using standard shortcuts
+- **Resizable Layout**: Drag sidebar boundaries for custom workspace
+
+### 🧪 Well Plate Demo
+- Interactive well plate picker component
+- MIT-licensed well plate visualization tools
+- Page-specific tools panels with context system
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Available Pages
+- **Home** (`/`) - Welcome page
+- **Grid** (`/grid`) - Dual data grid interface
+- **Plate Demo** (`/plate`) - Well plate picker demonstration
+- **About** (`/about`) - Project information
 
 ## Learn More
 
