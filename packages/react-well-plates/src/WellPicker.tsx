@@ -196,6 +196,7 @@ export const MultiWellPicker: FunctionComponent<IWellPickerProps> = ({
           wellPlate,
         });
       }
+      return '';
     },
     [valueSet, bookedSet, disabledSet, className, wellPlate],
   );

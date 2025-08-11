@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MultiWellPicker, PositionFormat } from 'react-well-plates';
+import { useTools } from "@/components/layout/ToolsContext";
 
 export default function PlatePage() {
   const [selectedWells, setSelectedWells] = useState<number[]>([]);
@@ -11,6 +12,60 @@ export default function PlatePage() {
     setSelectedWells(wells);
     setSelectedLabels(labels);
   };
+
+  const clearSelection = () => {
+    setSelectedWells([]);
+    setSelectedLabels([]);
+  };
+
+  useTools(
+    <section className="tool-section">
+      <h2>Plate Tools</h2>
+      <button onClick={clearSelection} disabled={selectedWells.length === 0}>
+        Clear Selection
+      </button>
+      <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
+      <div>
+        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Plate Types</h3>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          6-Well Plate
+        </button>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          24-Well Plate
+        </button>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          96-Well Plate
+        </button>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          384-Well Plate
+        </button>
+      </div>
+      <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
+      <div>
+        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Actions</h3>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          Export Selection
+        </button>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          Save Template
+        </button>
+        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
+          Load Template
+        </button>
+      </div>
+      {selectedWells.length > 0 && (
+        <>
+          <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
+          <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+            <strong>Selected: {selectedWells.length}</strong>
+            <div style={{ marginTop: '0.5rem', maxHeight: '100px', overflow: 'auto' }}>
+              {selectedLabels.join(', ')}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
 
   return (
     <section style={{ display: "grid", gap: "2rem", padding: "1rem" }}>

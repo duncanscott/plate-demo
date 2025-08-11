@@ -61,7 +61,7 @@ function GridWellPlateInternal(
   };
 
   const values: Array<{
-    index: number;
+    index: number | undefined;
     label: string;
     isHeader: boolean;
     position: { row: number; column: number };
@@ -145,7 +145,7 @@ function GridWellPlateInternal(
           );
         }
 
-        const renderText = props.text?.(index);
+        const renderText = index !== undefined ? props.text?.(index) : undefined;
 
         return (
           <div
@@ -155,17 +155,15 @@ function GridWellPlateInternal(
               justifyContent: 'center',
               alignItems: 'center',
               ...cellStyle,
-              ...props.wellStyle(index),
+              ...(index !== undefined ? props.wellStyle?.(index) : {}),
             }}
             key={index}
-            className={props.wellClassName(index)}
-            onClick={props.onClick && ((e) => props.onClick(index, e))}
-            onMouseEnter={props.onEnter && ((e) => props.onEnter(index, e))}
-            onMouseLeave={props.onLeave && ((e) => props.onLeave(index, e))}
-            onMouseUp={props.onMouseUp && ((e) => props.onMouseUp(index, e))}
-            onMouseDown={
-              props.onMouseDown && ((e) => props.onMouseDown(index, e))
-            }
+            className={index !== undefined ? props.wellClassName?.(index) : undefined}
+            onClick={props.onClick && index !== undefined ? ((e) => props.onClick!(index, e)) : undefined}
+            onMouseEnter={props.onEnter && index !== undefined ? ((e) => props.onEnter!(index, e)) : undefined}
+            onMouseLeave={props.onLeave && index !== undefined ? ((e) => props.onLeave!(index, e)) : undefined}
+            onMouseUp={props.onMouseUp && index !== undefined ? ((e) => props.onMouseUp!(index, e)) : undefined}
+            onMouseDown={props.onMouseDown && index !== undefined ? ((e) => props.onMouseDown!(index, e)) : undefined}
           >
             <div>{renderText === undefined ? label : renderText}</div>
           </div>

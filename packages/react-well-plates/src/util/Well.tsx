@@ -41,17 +41,15 @@ const Well: FunctionComponent<IWellProps> = (props) => {
     ...customStyles,
   };
 
-  const displayableValue = props.text(props.value);
+  const displayableValue = props.text?.(props.value);
 
   return (
     <div
-      onClick={props.onClick && ((e) => props.onClick(props.value, e))}
-      onMouseEnter={props.onEnter && ((e) => props.onEnter(props.value, e))}
-      onMouseLeave={props.onLeave && ((e) => props.onLeave(props.value, e))}
-      onMouseUp={props.onMouseUp && ((e) => props.onMouseUp(props.value, e))}
-      onMouseDown={
-        props.onMouseDown && ((e) => props.onMouseDown(props.value, e))
-      }
+      onClick={props.onClick ? ((e) => props.onClick!(props.value, e)) : undefined}
+      onMouseEnter={props.onEnter ? ((e) => props.onEnter!(props.value, e)) : undefined}
+      onMouseLeave={props.onLeave ? ((e) => props.onLeave!(props.value, e)) : undefined}
+      onMouseUp={props.onMouseUp ? ((e) => props.onMouseUp!(props.value, e)) : undefined}
+      onMouseDown={props.onMouseDown ? ((e) => props.onMouseDown!(props.value, e)) : undefined}
       className={props.className}
       style={style}
     >
