@@ -34,6 +34,7 @@ export default function RootLayout({
             </LayoutWithTools>
           </div>
         </ToolsProvider>
+        <div id="portal" />
       </body>
     </html>
   );
