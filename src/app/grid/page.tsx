@@ -38,7 +38,7 @@ const detectDataType = (value: string): CellValue => {
 };
 
 export default function GridPage() {
-  const [data, setData] = useState<DynamicRow[]>(sampleData);
+  const [data, setData] = useState<DynamicRow[]>([]);
   const [tokens, setTokens] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -116,6 +116,7 @@ export default function GridPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
 
   // Resize observer to update grid dimensions
   useEffect(() => {
@@ -566,29 +567,29 @@ export default function GridPage() {
         return false;
       }
       
-      // If pasting into an empty grid or the first row, treat first row as headers
-      if (data.length > 0 && (row === 0 || data.length > 1)) {
-      const headers = data[0];
-      const rows: DynamicRow[] = [];
-      
-      // Process data rows (skip first row if it's headers)
-      const dataRows = data.slice(1);
-      for (const rowData of dataRows) {
-        const newRow: DynamicRow = {};
-        headers.forEach((header, index) => {
-          const value = rowData[index] || '';
-          newRow[header] = detectDataType(value);
-        });
-        rows.push(newRow);
+      // For multi-row paste, always process as table data
+      if (data.length > 1) {
+        const headers = data[0];
+        const rows: DynamicRow[] = [];
+        
+        // Process data rows (skip first row if it's headers)
+        const dataRows = data.slice(1);
+        for (const rowData of dataRows) {
+          const newRow: DynamicRow = {};
+          headers.forEach((header, index) => {
+            const value = rowData[index] || '';
+            newRow[header] = detectDataType(value);
+          });
+          rows.push(newRow);
+        }
+        
+        if (rows.length > 0) {
+          setData(rows);
+          return false; // Prevent default cell editing
+        }
       }
       
-      if (rows.length > 0) {
-        setData(rows);
-        return false; // Prevent default cell editing
-      }
-    }
-      
-      // For single cell or small pastes, let default handling occur
+      // For single cell pastes, let default handling occur
       return true;
       
     } catch (error) {
