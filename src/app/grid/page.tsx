@@ -634,11 +634,9 @@ export default function GridPage() {
         <p>Excel-like data grid with native paste support. Copy data from Excel or Google Sheets and paste directly into the grid using Ctrl+V (Windows) or ⌘V (Mac). Use the tools panel for token lookup.</p>
       </div>
       
-      <div style={{ flex: 1, minHeight: '350px', width: '100%', height: '350px' }}>
+      <div style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
         {mounted ? (
           <DataEditor
-            width={800}
-            height={350}
             getCellContent={getCellContent}
             columns={columns}
             rows={Math.max(sortedData.length, 1)}
@@ -686,7 +684,7 @@ export default function GridPage() {
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            height: '350px',
+            flex: 1,
             border: '1px solid var(--border)',
             borderRadius: '0.5rem',
             color: 'var(--muted)'
@@ -701,11 +699,9 @@ export default function GridPage() {
         <p>Process tokens using the tools panel. Tokens will be loaded into the leftmost column with results.</p>
       </div>
       
-      <div style={{ flex: 1, minHeight: '350px', width: '100%', height: '350px' }}>
+      <div style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
         {mounted ? (
           <DataEditor
-            width={800}
-            height={350}
             getCellContent={getTokenCellContent}
             columns={tokenColumns}
             rows={sortedTokenData.length}
@@ -752,7 +748,7 @@ export default function GridPage() {
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            height: '350px',
+            flex: 1,
             border: '1px solid var(--border)',
             borderRadius: '0.5rem',
             color: 'var(--muted)'
