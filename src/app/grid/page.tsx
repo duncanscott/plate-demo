@@ -639,12 +639,6 @@ export default function GridPage() {
       setError(null);
       const dataToExport = gridType === 'main' ? sortedData : sortedTokenData;
       const columnsToUse = gridType === 'main' ? columns : tokenColumns;
-      
-      if (dataToExport.length === 0) {
-        setError(`No data to export in ${gridType} grid`);
-        setTimeout(() => setError(null), 3000);
-        return;
-      }
 
       // Create CSV content
       const headers = columnsToUse.map(col => col.title).join(',');
@@ -686,41 +680,24 @@ export default function GridPage() {
     try {
       setError(null);
       
-      if (gridType === 'both' && sortedData.length === 0 && sortedTokenData.length === 0) {
-        setError('No data to export in either grid');
-        setTimeout(() => setError(null), 3000);
-        return;
-      }
-
       const wb = XLSX.utils.book_new();
 
       // Export main grid
       if (gridType === 'main' || gridType === 'both') {
-        if (sortedData.length > 0) {
-          const mainWS = XLSX.utils.json_to_sheet(sortedData);
-          XLSX.utils.book_append_sheet(wb, mainWS, 'Main Data');
-        }
+        const dataToExport = sortedData.length > 0 ? sortedData : [{}];
+        const mainWS = XLSX.utils.json_to_sheet(dataToExport);
+        XLSX.utils.book_append_sheet(wb, mainWS, 'Main Data');
       }
 
       // Export token grid
       if (gridType === 'token' || gridType === 'both') {
-        if (sortedTokenData.length > 0) {
-          // Filter out empty rows from token data
-          const filteredTokenData = sortedTokenData.filter(row => 
-            Object.values(row).some(val => val !== '' && val !== null)
-          );
-          if (filteredTokenData.length > 0) {
-            const tokenWS = XLSX.utils.json_to_sheet(filteredTokenData);
-            XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
-          }
-        }
-      }
-
-      // Check if workbook has sheets
-      if (wb.SheetNames.length === 0) {
-        setError('No data to export');
-        setTimeout(() => setError(null), 3000);
-        return;
+        // Filter out empty rows from token data, or use empty object if no data
+        const filteredTokenData = sortedTokenData.filter(row => 
+          Object.values(row).some(val => val !== '' && val !== null)
+        );
+        const dataToExport = filteredTokenData.length > 0 ? filteredTokenData : [{}];
+        const tokenWS = XLSX.utils.json_to_sheet(dataToExport);
+        XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
       }
 
       // Download file
@@ -766,7 +743,6 @@ export default function GridPage() {
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <button 
             onClick={clearGrid}
-            disabled={sortedData.length === 0}
             style={{ flex: 1 }}
           >
             🗑️ Clear Grid
@@ -870,14 +846,12 @@ export default function GridPage() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={() => exportToCSV('main')}
-              disabled={sortedData.length === 0}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📄 CSV
             </button>
             <button
               onClick={() => exportToXLSX('main')}
-              disabled={sortedData.length === 0}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📊 Excel
@@ -889,14 +863,12 @@ export default function GridPage() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={() => exportToCSV('token')}
-              disabled={tokenGridData.every(row => !row.Token)}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📄 CSV
             </button>
             <button
               onClick={() => exportToXLSX('token')}
-              disabled={tokenGridData.every(row => !row.Token)}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📊 Excel
@@ -905,7 +877,6 @@ export default function GridPage() {
         </div>
         <button
           onClick={() => exportToXLSX('both')}
-          disabled={sortedData.length === 0 && tokenGridData.every(row => !row.Token)}
           style={{ width: '100%', fontSize: '0.85rem' }}
         >
           📦 Export Both Grids to Excel
