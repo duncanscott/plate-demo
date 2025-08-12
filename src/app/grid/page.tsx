@@ -328,9 +328,17 @@ export default function GridPage() {
     
     if (!column || !column.id) return;
     
+    // Get the actual row data from sortedData
+    const sortedRow = sortedData[row];
+    if (!sortedRow) return;
+    
     setData(prev => {
+      // Find the original index of this row in the unsorted data
+      const originalIndex = prev.findIndex(r => r === sortedRow);
+      if (originalIndex === -1) return prev;
+      
       const newData = [...prev];
-      const rowData = { ...newData[row] };
+      const rowData = { ...newData[originalIndex] };
       
       // Update the specific cell value based on the new value type
       const columnId = column.id as string;
@@ -342,10 +350,10 @@ export default function GridPage() {
         rowData[columnId] = newValue.data;
       }
       
-      newData[row] = rowData;
+      newData[originalIndex] = rowData;
       return newData;
     });
-  }, [columns]);
+  }, [columns, sortedData]);
 
   // Get cell content for token grid
   const getTokenCellContent = useCallback(([col, row]: Item): EditableGridCell => {
@@ -553,7 +561,7 @@ export default function GridPage() {
   const handleNativePaste = useCallback((cell: Item, data: readonly (readonly string[])[]) => {
     try {
       setError(null);
-      const [, row] = cell;
+      const [col, row] = cell;
       
       if (!data || data.length === 0) {
         setError('No data to paste');
@@ -568,12 +576,15 @@ export default function GridPage() {
       }
       
       // For multi-row paste, always process as table data
-      if (data.length > 1) {
-        const headers = data[0];
-        const rows: DynamicRow[] = [];
+      if (data.length > 1 || (data.length === 1 && data[0].length > 1)) {
+        // Determine if first row is headers
+        const firstRow = data[0];
+        const hasHeaders = firstRow.every(cell => cell && isNaN(Number(cell)));
         
-        // Process data rows (skip first row if it's headers)
-        const dataRows = data.slice(1);
+        const headers = hasHeaders ? firstRow : firstRow.map((_, i) => `Column ${i + 1}`);
+        const dataRows = hasHeaders ? data.slice(1) : data;
+        
+        const rows: DynamicRow[] = [];
         for (const rowData of dataRows) {
           const newRow: DynamicRow = {};
           headers.forEach((header, index) => {
@@ -634,12 +645,29 @@ export default function GridPage() {
   }, []);
 
   // Export to CSV
-  const exportToCSV = (gridType: 'main' | 'token') => {
+  const exportToCSV = useCallback((gridType: 'main' | 'token') => {
     try {
       setError(null);
       const dataToExport = gridType === 'main' ? sortedData : sortedTokenData;
       const columnsToUse = gridType === 'main' ? columns : tokenColumns;
       
+      // Check if there's data to export
+      if (gridType === 'main' && sortedData.length === 0) {
+        setError('No data to export in main grid');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+      
+      if (gridType === 'token') {
+        const hasTokenData = sortedTokenData.some(row => 
+          Object.values(row).some(val => val !== '' && val !== null)
+        );
+        if (!hasTokenData) {
+          setError('No data to export in token grid');
+          setTimeout(() => setError(null), 3000);
+          return;
+        }
+      }
 
       // Create CSV content
       const headers = columnsToUse.map(col => col.title).join(',');
@@ -674,32 +702,45 @@ export default function GridPage() {
       setError('Failed to export to CSV');
       setTimeout(() => setError(null), 3000);
     }
-  };
+  }, [sortedData, sortedTokenData, columns, tokenColumns]);
 
   // Export to XLSX
-  const exportToXLSX = (gridType: 'main' | 'token' | 'both') => {
+  const exportToXLSX = useCallback((gridType: 'main' | 'token' | 'both') => {
     try {
       setError(null);
-      
+      console.log('exportToXLSX called with:', gridType);
+      console.log('Current data length:', sortedData.length);
+      console.log('Current token data:', sortedTokenData.length);
       
       const wb = XLSX.utils.book_new();
 
       // Export main grid
       if (gridType === 'main' || gridType === 'both') {
-        const dataToExport = sortedData.length > 0 ? sortedData : [{}];
-        const mainWS = XLSX.utils.json_to_sheet(dataToExport);
+        if (sortedData.length === 0) {
+          console.log('No data in main grid to export');
+          setError('No data to export in main grid. Please add data first.');
+          setTimeout(() => setError(null), 5000);
+          return;
+        }
+        const mainWS = XLSX.utils.json_to_sheet(sortedData);
         XLSX.utils.book_append_sheet(wb, mainWS, 'Main Data');
       }
 
       // Export token grid
       if (gridType === 'token' || gridType === 'both') {
-        // Filter out empty rows from token data, or use empty object if no data
+        // Filter out empty rows from token data
         const filteredTokenData = sortedTokenData.filter(row => 
           Object.values(row).some(val => val !== '' && val !== null)
         );
-        const dataToExport = filteredTokenData.length > 0 ? filteredTokenData : [{}];
-        const tokenWS = XLSX.utils.json_to_sheet(dataToExport);
-        XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
+        if (filteredTokenData.length === 0 && gridType === 'token') {
+          setError('No data to export in token grid');
+          setTimeout(() => setError(null), 3000);
+          return;
+        }
+        if (filteredTokenData.length > 0) {
+          const tokenWS = XLSX.utils.json_to_sheet(filteredTokenData);
+          XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
+        }
       }
 
       // Download file
@@ -707,14 +748,16 @@ export default function GridPage() {
         ? `all_grids_export_${new Date().toISOString().slice(0, 10)}.xlsx`
         : `${gridType}_grid_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
       
+      console.log('Writing XLSX file:', fileName);
       XLSX.writeFile(wb, fileName);
+      console.log('XLSX file written successfully');
       
     } catch (error) {
       console.error('Error exporting to XLSX:', error);
-      setError('Failed to export to Excel');
-      setTimeout(() => setError(null), 3000);
+      setError(`Failed to export to Excel: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTimeout(() => setError(null), 5000);
     }
-  };
+  }, [sortedData, sortedTokenData]);
 
   // Tools panel with Excel paste instructions and token input
   const tools = useMemo(() => (
@@ -895,7 +938,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data, sortedData, columns.length, tokenGridData]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, sortedData, columns.length, exportToCSV, exportToXLSX]);
 
   useTools(tools, [tokens, searchResults]);
 
