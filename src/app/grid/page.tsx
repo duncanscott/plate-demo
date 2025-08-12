@@ -634,11 +634,12 @@ export default function GridPage() {
   }, []);
 
   // Export to CSV
-  const exportToCSV = useCallback((gridType: 'main' | 'token') => {
+  const exportToCSV = (gridType: 'main' | 'token') => {
     try {
       setError(null);
       const dataToExport = gridType === 'main' ? sortedData : sortedTokenData;
       const columnsToUse = gridType === 'main' ? columns : tokenColumns;
+      
 
       // Create CSV content
       const headers = columnsToUse.map(col => col.title).join(',');
@@ -673,12 +674,13 @@ export default function GridPage() {
       setError('Failed to export to CSV');
       setTimeout(() => setError(null), 3000);
     }
-  }, [sortedData, sortedTokenData, columns, tokenColumns]);
+  };
 
   // Export to XLSX
-  const exportToXLSX = useCallback((gridType: 'main' | 'token' | 'both') => {
+  const exportToXLSX = (gridType: 'main' | 'token' | 'both') => {
     try {
       setError(null);
+      
       
       const wb = XLSX.utils.book_new();
 
@@ -712,7 +714,7 @@ export default function GridPage() {
       setError('Failed to export to Excel');
       setTimeout(() => setError(null), 3000);
     }
-  }, [sortedData, sortedTokenData]);
+  };
 
   // Tools panel with Excel paste instructions and token input
   const tools = useMemo(() => (
@@ -893,7 +895,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data, sortedData, columns.length, exportToCSV, exportToXLSX, tokenGridData]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data, sortedData, columns.length, tokenGridData]);
 
   useTools(tools, [tokens, searchResults]);
 
