@@ -48,6 +48,10 @@ export default function GridPage() {
   const [mainGridSize, setMainGridSize] = useState({ width: 800, height: 350 });
   const [tokenGridSize, setTokenGridSize] = useState({ width: 800, height: 350 });
 
+  // Error handling state
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Sorting state for main grid
   const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -74,8 +78,13 @@ export default function GridPage() {
   // Column width state for main grid - initialize from localStorage
   const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('grid-column-widths');
-      return saved ? JSON.parse(saved) : {};
+      try {
+        const saved = localStorage.getItem('grid-column-widths');
+        return saved ? JSON.parse(saved) : {};
+      } catch (error) {
+        console.warn('Failed to load grid column widths from localStorage:', error);
+        return {};
+      }
     }
     return {};
   });
@@ -91,8 +100,13 @@ export default function GridPage() {
     };
     
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('token-grid-column-widths');
-      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+      try {
+        const saved = localStorage.getItem('token-grid-column-widths');
+        return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+      } catch (error) {
+        console.warn('Failed to load token grid column widths from localStorage:', error);
+        return defaults;
+      }
     }
     return defaults;
   });
@@ -414,7 +428,13 @@ export default function GridPage() {
       
       // Save to localStorage
       if (typeof window !== 'undefined') {
-        localStorage.setItem('grid-column-widths', JSON.stringify(newWidths));
+        try {
+          localStorage.setItem('grid-column-widths', JSON.stringify(newWidths));
+        } catch (error) {
+          console.warn('Failed to save grid column widths to localStorage:', error);
+          setError('Failed to save column widths');
+          setTimeout(() => setError(null), 3000);
+        }
       }
       
       return newWidths;
@@ -433,7 +453,13 @@ export default function GridPage() {
       
       // Save to localStorage
       if (typeof window !== 'undefined') {
-        localStorage.setItem('token-grid-column-widths', JSON.stringify(newWidths));
+        try {
+          localStorage.setItem('token-grid-column-widths', JSON.stringify(newWidths));
+        } catch (error) {
+          console.warn('Failed to save token grid column widths to localStorage:', error);
+          setError('Failed to save column widths');
+          setTimeout(() => setError(null), 3000);
+        }
       }
       
       return newWidths;
@@ -442,10 +468,26 @@ export default function GridPage() {
 
   // Handle token processing - load tokens into leftmost column
   const processTokens = useCallback(() => {
-    const tokenList = tokens.split(/\s*[,\n]\s*/).filter(token => token.trim());
-    
-    // Update token grid with tokens in the leftmost column
-    setTokenGridData(prev => {
+    try {
+      setIsProcessing(true);
+      setError(null);
+      
+      const tokenList = tokens.split(/\s*[,\n]\s*/).filter(token => token.trim());
+      
+      if (tokenList.length === 0) {
+        setError('Please enter at least one token');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+      
+      if (tokenList.length > 1000) {
+        setError('Too many tokens (max 1000)');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+      
+      // Update token grid with tokens in the leftmost column
+      setTokenGridData(prev => {
       const newData = [...prev];
       
       // Clear existing data and add tokens
@@ -473,9 +515,17 @@ export default function GridPage() {
       return newData;
     });
 
-    // Keep the old search results for backward compatibility
-    const mockResults = tokenList.map(token => `Entity for token: ${token.trim()}`);
-    setSearchResults(mockResults);
+      // Keep the old search results for backward compatibility
+      const mockResults = tokenList.map(token => `Entity for token: ${token.trim()}`);
+      setSearchResults(mockResults);
+      
+    } catch (error) {
+      console.error('Error processing tokens:', error);
+      setError('Failed to process tokens. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setIsProcessing(false);
+    }
   }, [tokens]);
 
   const clearTokens = useCallback(() => {
@@ -499,10 +549,24 @@ export default function GridPage() {
 
   // Handle native paste events from Glide Data Grid
   const handleNativePaste = useCallback((cell: Item, data: readonly (readonly string[])[]) => {
-    const [, row] = cell;
-    
-    // If pasting into an empty grid or the first row, treat first row as headers
-    if (data.length > 0 && (row === 0 || data.length > 1)) {
+    try {
+      setError(null);
+      const [, row] = cell;
+      
+      if (!data || data.length === 0) {
+        setError('No data to paste');
+        setTimeout(() => setError(null), 3000);
+        return false;
+      }
+      
+      if (data.length > 10000) {
+        setError('Too much data to paste (max 10,000 rows)');
+        setTimeout(() => setError(null), 3000);
+        return false;
+      }
+      
+      // If pasting into an empty grid or the first row, treat first row as headers
+      if (data.length > 0 && (row === 0 || data.length > 1)) {
       const headers = data[0];
       const rows: DynamicRow[] = [];
       
@@ -522,9 +586,16 @@ export default function GridPage() {
         return false; // Prevent default cell editing
       }
     }
-    
-    // For single cell or small pastes, let default handling occur
-    return true;
+      
+      // For single cell or small pastes, let default handling occur
+      return true;
+      
+    } catch (error) {
+      console.error('Error pasting data:', error);
+      setError('Failed to paste data. Please check the format and try again.');
+      setTimeout(() => setError(null), 3000);
+      return false;
+    }
   }, []);
 
   const clearGrid = useCallback(() => {
@@ -537,19 +608,26 @@ export default function GridPage() {
 
   // Reset column widths to defaults
   const resetColumnWidths = useCallback(() => {
-    setColumnWidths({});
-    setTokenColumnWidths({
-      'Token': 150,
-      'Result': 200,
-      'Status': 100,
-      'Notes': 150,
-      'Extra': 120
-    });
-    
-    // Clear from localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('grid-column-widths');
-      localStorage.removeItem('token-grid-column-widths');
+    try {
+      setError(null);
+      setColumnWidths({});
+      setTokenColumnWidths({
+        'Token': 150,
+        'Result': 200,
+        'Status': 100,
+        'Notes': 150,
+        'Extra': 120
+      });
+      
+      // Clear from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('grid-column-widths');
+        localStorage.removeItem('token-grid-column-widths');
+      }
+    } catch (error) {
+      console.error('Error resetting column widths:', error);
+      setError('Failed to reset column widths');
+      setTimeout(() => setError(null), 3000);
     }
   }, []);
 
@@ -604,6 +682,20 @@ export default function GridPage() {
 
       <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
 
+      {error && (
+        <div style={{
+          padding: '0.75rem',
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          borderRadius: '6px',
+          color: '#dc2626',
+          fontSize: '0.9rem',
+          marginBottom: '1rem'
+        }}>
+          ⚠️ {error}
+        </div>
+      )}
+
       <div style={{ marginBottom: '1rem' }}>
         <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Token Lookup</h3>
         <textarea
@@ -625,10 +717,10 @@ export default function GridPage() {
         <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
           <button 
             onClick={processTokens}
-            disabled={!tokens.trim()}
+            disabled={!tokens.trim() || isProcessing}
             style={{ flex: 1 }}
           >
-            Process Tokens
+            {isProcessing ? '⏳ Processing...' : '⚙️ Process Tokens'}
           </button>
           <button 
             onClick={clearTokens}
@@ -673,7 +765,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, data.length, columns.length]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data.length, columns.length]);
 
   useTools(tools, [tokens, searchResults]);
 
