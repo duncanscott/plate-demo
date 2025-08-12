@@ -766,7 +766,7 @@ export default function GridPage() {
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <button 
             onClick={clearGrid}
-            disabled={data.length === 0}
+            disabled={sortedData.length === 0}
             style={{ flex: 1 }}
           >
             🗑️ Clear Grid
@@ -870,14 +870,14 @@ export default function GridPage() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={() => exportToCSV('main')}
-              disabled={data.length === 0}
+              disabled={sortedData.length === 0}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📄 CSV
             </button>
             <button
               onClick={() => exportToXLSX('main')}
-              disabled={data.length === 0}
+              disabled={sortedData.length === 0}
               style={{ flex: 1, fontSize: '0.85rem' }}
             >
               📊 Excel
@@ -905,7 +905,7 @@ export default function GridPage() {
         </div>
         <button
           onClick={() => exportToXLSX('both')}
-          disabled={data.length === 0 && tokenGridData.every(row => !row.Token)}
+          disabled={sortedData.length === 0 && tokenGridData.every(row => !row.Token)}
           style={{ width: '100%', fontSize: '0.85rem' }}
         >
           📦 Export Both Grids to Excel
@@ -917,12 +917,12 @@ export default function GridPage() {
       <div>
         <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Grid Info</h3>
         <div style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-          <div>Rows: {data.length}</div>
+          <div>Rows: {sortedData.length}</div>
           <div>Columns: {columns.length}</div>
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data.length, columns.length, exportToCSV, exportToXLSX, tokenGridData]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data, sortedData, columns.length, exportToCSV, exportToXLSX, tokenGridData]);
 
   useTools(tools, [tokens, searchResults]);
 
