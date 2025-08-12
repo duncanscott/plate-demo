@@ -307,7 +307,7 @@ export default function GridPage() {
   }, [tokenColumns]);
 
   // Handle header menu clicks for main grid sorting
-  const onHeaderMenuClick = useCallback((col: number, _bounds: { x: number; y: number; width: number; height: number }) => {
+  const onHeaderMenuClick = useCallback((col: number) => {
     const column = columns[col];
     if (!column?.id) return;
 
@@ -323,7 +323,7 @@ export default function GridPage() {
   }, [columns, sortColumn]);
 
   // Handle header menu clicks for token grid sorting  
-  const onTokenHeaderMenuClick = useCallback((col: number, _bounds: { x: number; y: number; width: number; height: number }) => {
+  const onTokenHeaderMenuClick = useCallback((col: number) => {
     const column = tokenColumns[col];
     if (!column?.id) return;
 
