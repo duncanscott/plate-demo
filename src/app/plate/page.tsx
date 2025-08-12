@@ -1,140 +1,60 @@
 'use client';
-
-import { useState, useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MultiWellPicker, PositionFormat } from 'react-well-plates';
-import { useTools } from "@/components/layout/ToolsContext";
+import { useLimsStore } from '@/store/limsStore';
 
 export default function PlatePage() {
-  const [selectedWells, setSelectedWells] = useState<number[]>([]);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const router = useRouter();
+  const search = useSearchParams();
+  const { selectedWells, setSelectedWells, clearSelection } = useLimsStore();
 
-  const handleWellChange = (wells: number[], labels: string[]) => {
-    setSelectedWells(wells);
-    setSelectedLabels(labels);
-  };
+  // Parse existing selection from URL (?w=A1,B2)
+  useEffect(() => {
+    const param = search.get('w');
+    if (param) {
+      const ids = param.split(',').map((s) => s.trim()).filter(Boolean);
+      setSelectedWells(ids as any);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const clearSelection = () => {
-    setSelectedWells([]);
-    setSelectedLabels([]);
+  // Keep URL in sync with selection
+  useEffect(() => {
+    const qs = new URLSearchParams(search.toString());
+    if (!selectedWells?.length) {
+      qs.delete('w');
+    } else {
+      qs.set('w', selectedWells.join(','));
+    }
+    router.replace(`?${qs.toString()}`);
+  }, [selectedWells, router, search]);
+
+  const handleWellChange = (wells: any[], _labels: string[]) => {
+    setSelectedWells(wells as any);
   };
 
   const tools = useMemo(() => (
     <section className="tool-section">
       <h2>Plate Tools</h2>
-      <button onClick={clearSelection} disabled={selectedWells.length === 0}>
+      <button onClick={clearSelection} disabled={!selectedWells?.length}>
         Clear Selection
       </button>
       <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
       <div>
-        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Plate Types</h3>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          6-Well Plate
-        </button>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          24-Well Plate
-        </button>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          96-Well Plate
-        </button>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          384-Well Plate
-        </button>
+        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0' }}>Selection</h3>
+        <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-word' }}>{JSON.stringify(selectedWells)}</div>
       </div>
-      <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
-      <div>
-        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Actions</h3>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          Export Selection
-        </button>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          Save Template
-        </button>
-        <button style={{ display: 'block', width: '100%', marginBottom: '0.5rem' }}>
-          Load Template
-        </button>
-      </div>
-      {selectedWells.length > 0 && (
-        <>
-          <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
-          <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-            <strong>Selected: {selectedWells.length}</strong>
-            <div style={{ marginTop: '0.5rem', maxHeight: '100px', overflow: 'auto' }}>
-              {selectedLabels.join(', ')}
-            </div>
-          </div>
-        </>
-      )}
     </section>
-  ), [selectedWells, selectedLabels]);
-
-  useTools(tools, [selectedWells, selectedLabels]);
+  ), [selectedWells, clearSelection]);
 
   return (
-    <section style={{ display: "grid", gap: "2rem", padding: "1rem" }}>
-      <div>
-        <h2>Well Plate Picker Demo</h2>
-        <p>
-          This is a demo of the WellPicker component. Click and drag to select wells.
-        </p>
-      </div>
-
-      <div style={{ display: "grid", gap: "1rem" }}>
-        <h3>96-Well Plate (8×12)</h3>
-        <MultiWellPicker
-          rows={8}
-          columns={12}
-          format={PositionFormat.LetterNumber}
-          value={selectedWells}
-          onChange={handleWellChange}
-          wellSize={30}
-          rangeSelectionMode="zone"
-          disabled={[0, 1, 2]} // Disable first few wells as example
-        />
-      </div>
-
-      <div style={{ display: "grid", gap: "1rem" }}>
-        <h3>24-Well Plate (4×6)</h3>
-        <MultiWellPicker
-          rows={4}
-          columns={6}
-          format={PositionFormat.LetterNumber}
-          value={[]}
-          onChange={() => {}} // Independent picker
-          wellSize={40}
-          rangeSelectionMode="rows"
-        />
-      </div>
-
-      {selectedWells.length > 0 && (
-        <div style={{ 
-          background: "var(--panel)", 
-          border: "1px solid var(--border)", 
-          borderRadius: "0.5rem", 
-          padding: "1rem" 
-        }}>
-          <h3>Selected Wells</h3>
-          <p><strong>Indices:</strong> {selectedWells.join(', ')}</p>
-          <p><strong>Labels:</strong> {selectedLabels.join(', ')}</p>
-          <p><strong>Count:</strong> {selectedWells.length}</p>
-        </div>
-      )}
-
-      <div style={{ 
-        background: "var(--panel)", 
-        border: "1px solid var(--border)", 
-        borderRadius: "0.5rem", 
-        padding: "1rem",
-        fontSize: "0.9rem",
-        color: "var(--muted)"
-      }}>
-        <h4>Usage Tips:</h4>
-        <ul style={{ margin: 0, paddingLeft: "1.5rem" }}>
-          <li>Click individual wells to select/deselect</li>
-          <li>Click and drag to select rectangular zones</li>
-          <li>Gray wells are disabled and cannot be selected</li>
-          <li>Different plates support different selection modes (zone, rows, columns)</li>
-        </ul>
-      </div>
-    </section>
+    <main className="plate-page">
+      {tools}
+      <MultiWellPicker
+        onChange={handleWellChange}
+        positionFormat={PositionFormat.A1}
+      />
+    </main>
   );
 }
