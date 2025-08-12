@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { DataEditor, GridCellKind, GridColumn, Item, EditableGridCell } from '@glideapps/glide-data-grid';
 import '@glideapps/glide-data-grid/dist/index.css';
 import { useTools } from "@/components/layout/ToolsContext";
+import * as XLSX from 'xlsx';
 
 // Dynamic cell data type
 type CellValue = string | number | boolean | null;
@@ -631,6 +632,110 @@ export default function GridPage() {
     }
   }, []);
 
+  // Export to CSV
+  const exportToCSV = useCallback((gridType: 'main' | 'token') => {
+    try {
+      setError(null);
+      const dataToExport = gridType === 'main' ? sortedData : sortedTokenData;
+      const columnsToUse = gridType === 'main' ? columns : tokenColumns;
+      
+      if (dataToExport.length === 0) {
+        setError(`No data to export in ${gridType} grid`);
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      // Create CSV content
+      const headers = columnsToUse.map(col => col.title).join(',');
+      const rows = dataToExport.map(row => {
+        return columnsToUse.map(col => {
+          const value = row[col.id || ''];
+          // Escape commas and quotes in CSV
+          if (value === null || value === undefined) return '';
+          const stringValue = String(value);
+          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+          }
+          return stringValue;
+        }).join(',');
+      }).join('\n');
+
+      const csvContent = `${headers}\n${rows}`;
+      
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${gridType}_grid_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      console.error('Error exporting to CSV:', error);
+      setError('Failed to export to CSV');
+      setTimeout(() => setError(null), 3000);
+    }
+  }, [sortedData, sortedTokenData, columns, tokenColumns]);
+
+  // Export to XLSX
+  const exportToXLSX = useCallback((gridType: 'main' | 'token' | 'both') => {
+    try {
+      setError(null);
+      
+      if (gridType === 'both' && sortedData.length === 0 && sortedTokenData.length === 0) {
+        setError('No data to export in either grid');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // Export main grid
+      if (gridType === 'main' || gridType === 'both') {
+        if (sortedData.length > 0) {
+          const mainWS = XLSX.utils.json_to_sheet(sortedData);
+          XLSX.utils.book_append_sheet(wb, mainWS, 'Main Data');
+        }
+      }
+
+      // Export token grid
+      if (gridType === 'token' || gridType === 'both') {
+        if (sortedTokenData.length > 0) {
+          // Filter out empty rows from token data
+          const filteredTokenData = sortedTokenData.filter(row => 
+            Object.values(row).some(val => val !== '' && val !== null)
+          );
+          if (filteredTokenData.length > 0) {
+            const tokenWS = XLSX.utils.json_to_sheet(filteredTokenData);
+            XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
+          }
+        }
+      }
+
+      // Check if workbook has sheets
+      if (wb.SheetNames.length === 0) {
+        setError('No data to export');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      // Download file
+      const fileName = gridType === 'both' 
+        ? `all_grids_export_${new Date().toISOString().slice(0, 10)}.xlsx`
+        : `${gridType}_grid_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
+      
+    } catch (error) {
+      console.error('Error exporting to XLSX:', error);
+      setError('Failed to export to Excel');
+      setTimeout(() => setError(null), 3000);
+    }
+  }, [sortedData, sortedTokenData]);
+
   // Tools panel with Excel paste instructions and token input
   const tools = useMemo(() => (
     <section className="tool-section">
@@ -757,6 +862,57 @@ export default function GridPage() {
 
       <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
       
+      <div style={{ marginBottom: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Export Data</h3>
+        <div style={{ marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Main Grid</div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => exportToCSV('main')}
+              disabled={data.length === 0}
+              style={{ flex: 1, fontSize: '0.85rem' }}
+            >
+              📄 CSV
+            </button>
+            <button
+              onClick={() => exportToXLSX('main')}
+              disabled={data.length === 0}
+              style={{ flex: 1, fontSize: '0.85rem' }}
+            >
+              📊 Excel
+            </button>
+          </div>
+        </div>
+        <div style={{ marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Token Grid</div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => exportToCSV('token')}
+              disabled={tokenGridData.every(row => !row.Token)}
+              style={{ flex: 1, fontSize: '0.85rem' }}
+            >
+              📄 CSV
+            </button>
+            <button
+              onClick={() => exportToXLSX('token')}
+              disabled={tokenGridData.every(row => !row.Token)}
+              style={{ flex: 1, fontSize: '0.85rem' }}
+            >
+              📊 Excel
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={() => exportToXLSX('both')}
+          disabled={data.length === 0 && tokenGridData.every(row => !row.Token)}
+          style={{ width: '100%', fontSize: '0.85rem' }}
+        >
+          📦 Export Both Grids to Excel
+        </button>
+      </div>
+
+      <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
+      
       <div>
         <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Grid Info</h3>
         <div style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
@@ -765,7 +921,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data.length, columns.length]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data.length, columns.length, exportToCSV, exportToXLSX, tokenGridData]);
 
   useTools(tools, [tokens, searchResults]);
 

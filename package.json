@@ -18,7 +18,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-responsive-carousel": "^3.2.23",
-    "react-well-plates": "file:./packages/react-well-plates"
+    "react-well-plates": "file:./packages/react-well-plates",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
