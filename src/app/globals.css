@@ -1,6 +1,6 @@
 /* ---- Variables ---- */
 :root {
-    --header-h: 64px;
+    --header-h: 54px;
 
     /* Left tools panel width cap */
     --sidebar-max: 500em;
