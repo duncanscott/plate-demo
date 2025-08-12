@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { DataEditor, GridCellKind, GridColumn, Item, EditableGridCell } from '@glideapps/glide-data-grid';
 import '@glideapps/glide-data-grid/dist/index.css';
 import { useTools } from "@/components/layout/ToolsContext";
@@ -41,6 +41,12 @@ export default function GridPage() {
   const [tokens, setTokens] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+
+  // Refs for measuring container dimensions
+  const mainGridRef = useRef<HTMLDivElement>(null);
+  const tokenGridRef = useRef<HTMLDivElement>(null);
+  const [mainGridSize, setMainGridSize] = useState({ width: 800, height: 350 });
+  const [tokenGridSize, setTokenGridSize] = useState({ width: 800, height: 350 });
 
   // Sorting state for main grid
   const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
@@ -95,6 +101,50 @@ export default function GridPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Resize observer to update grid dimensions
+  useEffect(() => {
+    if (!mounted) return;
+
+    const updateMainGridSize = () => {
+      if (mainGridRef.current) {
+        const { width, height } = mainGridRef.current.getBoundingClientRect();
+        setMainGridSize({ width: Math.max(width, 400), height: Math.max(height, 200) });
+      }
+    };
+
+    const updateTokenGridSize = () => {
+      if (tokenGridRef.current) {
+        const { width, height } = tokenGridRef.current.getBoundingClientRect();
+        setTokenGridSize({ width: Math.max(width, 400), height: Math.max(height, 200) });
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMainGridSize();
+      updateTokenGridSize();
+    });
+
+    if (mainGridRef.current) {
+      resizeObserver.observe(mainGridRef.current);
+      updateMainGridSize();
+    }
+
+    if (tokenGridRef.current) {
+      resizeObserver.observe(tokenGridRef.current);
+      updateTokenGridSize();
+    }
+
+    // Initial size calculation
+    setTimeout(() => {
+      updateMainGridSize();
+      updateTokenGridSize();
+    }, 100);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [mounted]);
 
   // Sorting function for main grid
   const sortedData = useMemo(() => {
@@ -634,9 +684,11 @@ export default function GridPage() {
         <p>Excel-like data grid with native paste support. Copy data from Excel or Google Sheets and paste directly into the grid using Ctrl+V (Windows) or ⌘V (Mac). Use the tools panel for token lookup.</p>
       </div>
       
-      <div style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
+      <div ref={mainGridRef} style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
         {mounted ? (
           <DataEditor
+            width={mainGridSize.width}
+            height={mainGridSize.height}
             getCellContent={getCellContent}
             columns={columns}
             rows={Math.max(sortedData.length, 1)}
@@ -699,9 +751,11 @@ export default function GridPage() {
         <p>Process tokens using the tools panel. Tokens will be loaded into the leftmost column with results.</p>
       </div>
       
-      <div style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
+      <div ref={tokenGridRef} style={{ flex: 1, minHeight: '300px', width: '100%', display: 'flex' }}>
         {mounted ? (
           <DataEditor
+            width={tokenGridSize.width}
+            height={tokenGridSize.height}
             getCellContent={getTokenCellContent}
             columns={tokenColumns}
             rows={sortedTokenData.length}
