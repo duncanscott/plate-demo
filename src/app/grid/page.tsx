@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { DataEditor, GridCellKind, GridColumn, Item, EditableGridCell } from '@glideapps/glide-data-grid';
 import '@glideapps/glide-data-grid/dist/index.css';
 import { useTools } from "@/components/layout/ToolsContext";
-import * as XLSX from 'xlsx';
 
 // Dynamic cell data type
 type CellValue = string | number | boolean | null;
@@ -46,6 +45,12 @@ export default function GridPage() {
   // Refs for measuring container dimensions
   const mainGridRef = useRef<HTMLDivElement>(null);
   const tokenGridRef = useRef<HTMLDivElement>(null);
+  
+  // Add refs to always have current data
+  const dataRef = useRef<DynamicRow[]>([]);
+  dataRef.current = data;
+  const sortedDataRef = useRef<DynamicRow[]>([]);
+  
   const [mainGridSize, setMainGridSize] = useState({ width: 800, height: 350 });
   const [tokenGridSize, setTokenGridSize] = useState({ width: 800, height: 350 });
 
@@ -190,6 +195,9 @@ export default function GridPage() {
     
     return sorted;
   }, [data, sortColumn, sortDirection]);
+  
+  // Update ref whenever sortedData changes
+  sortedDataRef.current = sortedData;
 
   // Dynamic columns based on data
   const columns: GridColumn[] = useMemo(() => {
@@ -616,7 +624,9 @@ export default function GridPage() {
   }, []);
 
   const addSampleData = useCallback(() => {
+    console.log('addSampleData called, setting data to:', sampleData);
     setData(sampleData);
+    console.log('Data set complete');
   }, []);
 
   // Reset column widths to defaults
@@ -705,24 +715,36 @@ export default function GridPage() {
   }, [sortedData, sortedTokenData, columns, tokenColumns]);
 
   // Export to XLSX
-  const exportToXLSX = useCallback((gridType: 'main' | 'token' | 'both') => {
+  const exportToXLSX = useCallback(async (gridType: 'main' | 'token' | 'both') => {
     try {
       setError(null);
       console.log('exportToXLSX called with:', gridType);
-      console.log('Current data length:', sortedData.length);
-      console.log('Current token data:', sortedTokenData.length);
+      console.log('Current data from ref:', dataRef.current);
+      console.log('Current data length from ref:', dataRef.current.length);
+      console.log('Current sortedData from ref:', sortedDataRef.current);
+      console.log('Current sortedData length from ref:', sortedDataRef.current.length);
+      
+      // Use refs to get the latest data
+      const currentSortedData = sortedDataRef.current;
+      const currentData = dataRef.current;
+      const dataToExport = currentSortedData.length > 0 ? currentSortedData : currentData;
+      
+      if (dataToExport.length === 0 && gridType === 'main') {
+        setError('No data to export. Please add data first.');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      
+      // Dynamically import XLSX
+      console.log('Importing XLSX library...');
+      const XLSX = await import('xlsx');
+      console.log('XLSX imported successfully');
       
       const wb = XLSX.utils.book_new();
 
       // Export main grid
-      if (gridType === 'main' || gridType === 'both') {
-        if (sortedData.length === 0) {
-          console.log('No data in main grid to export');
-          setError('No data to export in main grid. Please add data first.');
-          setTimeout(() => setError(null), 5000);
-          return;
-        }
-        const mainWS = XLSX.utils.json_to_sheet(sortedData);
+      if ((gridType === 'main' || gridType === 'both') && dataToExport.length > 0) {
+        const mainWS = XLSX.utils.json_to_sheet(dataToExport);
         XLSX.utils.book_append_sheet(wb, mainWS, 'Main Data');
       }
 
@@ -732,11 +754,6 @@ export default function GridPage() {
         const filteredTokenData = sortedTokenData.filter(row => 
           Object.values(row).some(val => val !== '' && val !== null)
         );
-        if (filteredTokenData.length === 0 && gridType === 'token') {
-          setError('No data to export in token grid');
-          setTimeout(() => setError(null), 3000);
-          return;
-        }
         if (filteredTokenData.length > 0) {
           const tokenWS = XLSX.utils.json_to_sheet(filteredTokenData);
           XLSX.utils.book_append_sheet(wb, tokenWS, 'Token Data');
@@ -748,16 +765,16 @@ export default function GridPage() {
         ? `all_grids_export_${new Date().toISOString().slice(0, 10)}.xlsx`
         : `${gridType}_grid_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
       
-      console.log('Writing XLSX file:', fileName);
+      console.log('About to write XLSX file:', fileName);
       XLSX.writeFile(wb, fileName);
-      console.log('XLSX file written successfully');
+      console.log('XLSX file write completed');
       
     } catch (error) {
-      console.error('Error exporting to XLSX:', error);
-      setError(`Failed to export to Excel: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error in exportToXLSX:', error);
+      setError(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setTimeout(() => setError(null), 5000);
     }
-  }, [sortedData, sortedTokenData]);
+  }, [data, sortedData, sortedTokenData]);
 
   // Tools panel with Excel paste instructions and token input
   const tools = useMemo(() => (
@@ -938,7 +955,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, sortedData, columns.length, exportToCSV, exportToXLSX]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, error, isProcessing, data, sortedData, columns.length, exportToCSV, exportToXLSX]);
 
   useTools(tools, [tokens, searchResults]);
 
