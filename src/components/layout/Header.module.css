@@ -22,7 +22,29 @@
     align-items: center;
 }
 
+.nav a {
+    color: #e5e7eb;
+    text-decoration: none;
+    opacity: 0.85;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.nav a:visited {
+    color: #e5e7eb;
+}
+
+.nav a:hover {
+    opacity: 1;
+    color: #f9fafb;
+}
+
+.nav a:active {
+    color: #cbd5e1;
+}
+
 .nav a.active {
     text-decoration: underline;
     text-underline-offset: 4px;
+    opacity: 1;
+    color: #f9fafb;
 }
