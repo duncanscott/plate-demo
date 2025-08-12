@@ -65,16 +65,30 @@ export default function GridPage() {
   const [tokenSortColumn, setTokenSortColumn] = useState<string | undefined>(undefined);
   const [tokenSortDirection, setTokenSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Column width state for main grid
-  const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
+  // Column width state for main grid - initialize from localStorage
+  const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('grid-column-widths');
+      return saved ? JSON.parse(saved) : {};
+    }
+    return {};
+  });
   
-  // Column width state for token grid  
-  const [tokenColumnWidths, setTokenColumnWidths] = useState<{ [key: string]: number }>({
-    'Token': 150,
-    'Result': 200,
-    'Status': 100,
-    'Notes': 150,
-    'Extra': 120
+  // Column width state for token grid - initialize from localStorage
+  const [tokenColumnWidths, setTokenColumnWidths] = useState<{ [key: string]: number }>(() => {
+    const defaults = {
+      'Token': 150,
+      'Result': 200,
+      'Status': 100,
+      'Notes': 150,
+      'Extra': 120
+    };
+    
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('token-grid-column-widths');
+      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    }
+    return defaults;
   });
 
   // Prevent SSR issues with DataGrid
@@ -342,20 +356,38 @@ export default function GridPage() {
   const onColumnResize = useCallback((column: GridColumn, newSize: number) => {
     if (!column.id) return;
     
-    setColumnWidths(prev => ({
-      ...prev,
-      [column.id as string]: newSize
-    }));
+    setColumnWidths(prev => {
+      const newWidths = {
+        ...prev,
+        [column.id as string]: newSize
+      };
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('grid-column-widths', JSON.stringify(newWidths));
+      }
+      
+      return newWidths;
+    });
   }, []);
 
   // Handle column resize for token grid
   const onTokenColumnResize = useCallback((column: GridColumn, newSize: number) => {
     if (!column.id) return;
     
-    setTokenColumnWidths(prev => ({
-      ...prev,
-      [column.id as string]: newSize
-    }));
+    setTokenColumnWidths(prev => {
+      const newWidths = {
+        ...prev,
+        [column.id as string]: newSize
+      };
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token-grid-column-widths', JSON.stringify(newWidths));
+      }
+      
+      return newWidths;
+    });
   }, []);
 
   // Handle token processing - load tokens into leftmost column
@@ -453,6 +485,24 @@ export default function GridPage() {
     setData(sampleData);
   }, []);
 
+  // Reset column widths to defaults
+  const resetColumnWidths = useCallback(() => {
+    setColumnWidths({});
+    setTokenColumnWidths({
+      'Token': 150,
+      'Result': 200,
+      'Status': 100,
+      'Notes': 150,
+      'Extra': 120
+    });
+    
+    // Clear from localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('grid-column-widths');
+      localStorage.removeItem('token-grid-column-widths');
+    }
+  }, []);
+
   // Tools panel with Excel paste instructions and token input
   const tools = useMemo(() => (
     <section className="tool-section">
@@ -479,7 +529,7 @@ export default function GridPage() {
             Supports: Excel, Google Sheets, CSV
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <button 
             onClick={clearGrid}
             disabled={data.length === 0}
@@ -494,6 +544,12 @@ export default function GridPage() {
             📊 Sample Data
           </button>
         </div>
+        <button 
+          onClick={resetColumnWidths}
+          style={{ width: '100%', fontSize: '0.85rem' }}
+        >
+          📏 Reset Column Widths
+        </button>
       </div>
 
       <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
@@ -567,7 +623,7 @@ export default function GridPage() {
         </div>
       </div>
     </section>
-  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, data.length, columns.length]);
+  ), [tokens, searchResults, processTokens, clearTokens, clearGrid, addSampleData, resetColumnWidths, data.length, columns.length]);
 
   useTools(tools, [tokens, searchResults]);
 
